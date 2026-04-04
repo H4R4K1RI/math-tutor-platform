@@ -1,4 +1,4 @@
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import declarative_base
 import os
 from dotenv import load_dotenv
@@ -7,24 +7,23 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Создаем асинхронный engine
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,  # В продакшене выключить
-    future=True,
+    echo=True,
+    pool_size=5,
+    max_overflow=10,
+    pool_pre_ping=True,
+    pool_recycle=3600,
 )
 
-# Создаем фабрику сессий
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=False,
+    expire_on_commit=False
 )
 
-# Базовый класс для моделей
 Base = declarative_base()
 
-# Dependency для получения сессии в эндпоинтах
 async def get_db():
     async with AsyncSessionLocal() as session:
         try:
