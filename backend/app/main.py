@@ -1,5 +1,8 @@
 from fastapi import FastAPI
-from app.api import auth, assignments, submissions
+from app.api import auth, assignments, submissions, uploads
+from fastapi.staticfiles import StaticFiles
+import os
+
 
 app = FastAPI(
     title="Math Tutor Platform",
@@ -10,9 +13,15 @@ app = FastAPI(
     }
 )
 
+static_dir = "uploads"
+os.makedirs(static_dir, exist_ok=True)
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
 app.include_router(auth.router, prefix="/api", tags=["authentication"])
 app.include_router(assignments.router, prefix="/api", tags=["assignments"])
 app.include_router(submissions.router, prefix="/api", tags=["submissions"])
+app.include_router(uploads.router, prefix="/api", tags=["upload"])
+
 
 
 @app.get("/")
