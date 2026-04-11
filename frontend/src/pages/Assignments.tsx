@@ -174,7 +174,7 @@ const Assignments: React.FC = () => {
                 <div className="mt-2 p-2 bg-gray-50 rounded">
                   <p className="text-sm text-gray-600 font-medium">Текущий файл:</p>
                   <a 
-                    href={`SERVER_URL${JSON.parse(existingFileUrl)[0]}`} 
+                    href={`${SERVER_URL}${JSON.parse(existingFileUrl)[0]}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline text-sm"

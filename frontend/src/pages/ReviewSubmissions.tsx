@@ -87,7 +87,7 @@ submissionsRes.data.forEach((sub: any) => {
                             return files.map((url: string, idx: number) => (
                               <a 
                                 key={idx} 
-                                href={`SERVER_URL${url}`} 
+                                href={`${SERVER_URL}${url}`} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline block text-sm mt-1"

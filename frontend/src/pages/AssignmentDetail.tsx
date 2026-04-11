@@ -87,7 +87,7 @@ const AssignmentDetail: React.FC = () => {
           <div className="mt-4">
             <h3 className="font-semibold">Вложения:</h3>
             {JSON.parse(assignment.attachments).map((url: string, idx: number) => (
-              <a key={idx} href={`SERVER_URL${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 block hover:underline">
+              <a key={idx} href={`${SERVER_URL}${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 block hover:underline">
                 Скачать файл {idx + 1}
               </a>
             ))}
