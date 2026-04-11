@@ -11,4 +11,6 @@ env/
 
 postgres_data/
 
-*.log
+*.log*.py.save
+nohup.out
+*.tsbuildinfo
