@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from typing import List
 
+from app.socket_manager import sio
 from app.db.database import get_db
 from app.models.user import User
 from app.models.assignment import Assignment
@@ -76,7 +77,12 @@ async def create_submission(
     db.add(new_submission)
     await db.commit()
     await db.refresh(new_submission)
-    
+    await sio.emit('submission_updated', {
+        'action': 'submitted',
+        'submission_id': new_submission.id,
+        'assignment_id': new_submission.assignment_id
+    })
+
     return new_submission
 
 @router.get("/", response_model=List[SubmissionListResponse])
@@ -188,6 +194,12 @@ async def update_submission(
         )
     
     await db.commit()
+    await sio.emit('submission_updated', {
+    'action': 'reviewed',
+    'submission_id': submission.id,
+    'assignment_id': submission.assignment_id,
+    'status': submission.status
+})
     await db.refresh(submission)
     
     return submission

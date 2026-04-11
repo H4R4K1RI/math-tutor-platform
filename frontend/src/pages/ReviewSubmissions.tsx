@@ -2,15 +2,13 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Submission, Assignment } from '../types';
 import toast from 'react-hot-toast';
+import { socket } from '../socket';
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const ReviewSubmissions: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     try {
@@ -18,10 +16,6 @@ const ReviewSubmissions: React.FC = () => {
         apiClient.get('/submissions'),
         apiClient.get('/assignments')
       ]);
-      console.log('Submissions from server:', submissionsRes.data);
-submissionsRes.data.forEach((sub: any) => {
-  console.log(`Submission ${sub.id}: files =`, sub.files);
-});
       setSubmissions(submissionsRes.data);
       setAssignments(assignmentsRes.data);
     } catch (error) {
@@ -29,7 +23,33 @@ submissionsRes.data.forEach((sub: any) => {
     } finally {
       setLoading(false);
     }
-  };
+  };  
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const handleSubmissionUpdate = (data: any) => {
+      console.log('Review page: Submission event received', data);
+      fetchData();
+    };
+    
+    const handleAssignmentUpdate = (data: any) => {
+      console.log('Review page: Assignment event received', data);
+      fetchData();
+    };
+    
+    socket.on('submission_updated', handleSubmissionUpdate);
+    socket.on('assignment_updated', handleAssignmentUpdate);
+    socket.on('assignment_deleted', handleAssignmentUpdate);
+    
+    return () => {
+      socket.off('submission_updated', handleSubmissionUpdate);
+      socket.off('assignment_updated', handleAssignmentUpdate);
+      socket.off('assignment_deleted', handleAssignmentUpdate);
+    };
+  }, []);
 
   const updateStatus = async (id: number, status: string, feedback: string) => {
     try {

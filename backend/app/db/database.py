@@ -3,9 +3,14 @@ from sqlalchemy.orm import declarative_base
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# Явный путь к .env
+env_path = '/root/math-tutor-platform/backend/.env'
+load_dotenv(dotenv_path=env_path)
 
 DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    raise ValueError(f"DATABASE_URL not set. Checked path: {env_path}")
 
 engine = create_async_engine(
     DATABASE_URL,

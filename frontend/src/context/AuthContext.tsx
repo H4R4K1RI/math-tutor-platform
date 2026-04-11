@@ -9,6 +9,7 @@ interface AuthContextType {
   register: (email: string, full_name: string, password: string) => Promise<void>;
   logout: () => void;
   isTeacher: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,17 +22,36 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('access_token'));
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      apiClient.get('/auth/me').then(response => {
-        setUser(response.data);
-      }).catch(() => {
-        logout();
-      });
-    }
-  }, [token]);
+    const loadUser = async () => {
+      const storedToken = localStorage.getItem('access_token');
+      console.log('=== AUTH CHECK ===');
+      console.log('1. Stored token:', storedToken ? `${storedToken.substring(0, 50)}...` : 'null');
+      
+      if (storedToken) {
+        setToken(storedToken);
+        try {
+          console.log('2. Fetching /auth/me...');
+          const response = await apiClient.get('/auth/me');
+          console.log('3. User loaded:', response.data);
+          setUser(response.data);
+        } catch (error: any) {
+          console.error('4. Error:', error.response?.status, error.response?.data);
+          localStorage.removeItem('access_token');
+          setToken(null);
+        }
+      } else {
+        console.log('No token found');
+      }
+      setIsLoading(false);
+      console.log('=== AUTH CHECK COMPLETE ===');
+    };
+    
+    loadUser();
+  }, []);
 
   const login = async (email: string, password: string) => {
     const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
@@ -57,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isTeacher = user?.role === 'teacher';
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isTeacher }}>
+    <AuthContext.Provider value={{ user, token, login, register, logout, isTeacher, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

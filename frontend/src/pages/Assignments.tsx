@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
+import { socket } from '../socket';
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -21,6 +23,20 @@ const Assignments: React.FC = () => {
     fetchAssignments();
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+  const handleAssignmentUpdate = () => {
+    fetchAssignments();
+  };
+  
+  socket.on('assignment_updated', handleAssignmentUpdate);
+  socket.on('assignment_deleted', handleAssignmentUpdate);
+  
+  return () => {
+    socket.off('assignment_updated', handleAssignmentUpdate);
+    socket.off('assignment_deleted', handleAssignmentUpdate);
+  };
+}, []);
 
   const fetchAssignments = async () => {
     const response = await apiClient.get('/assignments');

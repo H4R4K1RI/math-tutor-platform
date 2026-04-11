@@ -134,7 +134,7 @@ async def update_assignment(
         await db.flush()
     
     await db.commit()
-    await sio.emit('assignment_updated', {'action': 'updated','assignment_id': assignment_id})
+    
     await db.refresh(assignment)
     
     return assignment
@@ -160,8 +160,5 @@ async def delete_assignment(
     
     await db.delete(assignment)
     await db.commit()
-    await sio.emit('assignment_deleted', {
-    'action': 'deleted',
-    'assignment_id': assignment_id
-})
+    
     return {"message": "Assignment deleted successfully"}

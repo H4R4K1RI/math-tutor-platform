@@ -4,6 +4,8 @@ import apiClient from '../api/client';
 import { Assignment, Submission } from '../types';
 import { Link } from 'react-router-dom';
 import Spinner from '../components/Spinner';
+import { socket } from '../socket';
+
 const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const Dashboard: React.FC = () => {
   const { user, isTeacher } = useAuth();
@@ -11,7 +13,6 @@ const Dashboard: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
     const fetchData = async () => {
       try {
         const [assignmentsRes, submissionsRes] = await Promise.all([
@@ -26,7 +27,36 @@ const Dashboard: React.FC = () => {
         setLoading(false);
       }
     };
+
+  useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const handleAssignmentUpdate = (data: any) => {
+      console.log('Assignment event:', data);
+      fetchData();
+    };
+    
+    const handleAssignmentDelete = (data: any) => {
+      console.log('Assignment deleted:', data);
+      fetchData();
+    };
+    
+    const handleSubmissionUpdate = (data: any) => {
+      console.log('Submission event:', data);
+      fetchData();
+    };
+    
+    socket.on('assignment_updated', handleAssignmentUpdate);
+    socket.on('assignment_deleted', handleAssignmentDelete);
+    socket.on('submission_updated', handleSubmissionUpdate);
+    
+    return () => {
+      socket.off('assignment_updated', handleAssignmentUpdate);
+      socket.off('assignment_deleted', handleAssignmentDelete);
+      socket.off('submission_updated', handleSubmissionUpdate);
+    };
   }, []);
 
   if (loading) return <Spinner />;
