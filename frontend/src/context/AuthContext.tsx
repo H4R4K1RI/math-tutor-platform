@@ -26,7 +26,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-<<<<<<< Updated upstream
     const loadUser = async () => {
       const storedToken = localStorage.getItem('access_token');
       console.log('=== AUTH CHECK ===');
@@ -53,22 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     loadUser();
   }, []);
-=======
-  const storedToken = localStorage.getItem('access_token');
-  if (storedToken) {
-    // Убедитесь, что токен не закодирован
-    const cleanToken = decodeURIComponent(storedToken);
-    setToken(cleanToken);
-    apiClient.get('/auth/me', {
-      headers: { Authorization: `Bearer ${cleanToken}` }
-    }).then(response => {
-      setUser(response.data);
-    }).catch(() => {
-      logout();
-    });
-  }
-}, []);
->>>>>>> Stashed changes
 
   const login = async (email: string, password: string) => {
     const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
