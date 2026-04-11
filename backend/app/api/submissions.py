@@ -151,14 +151,7 @@ async def update_submission(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Обновление решения (только для учителя - проверка)"""
-    
-    # Только учитель может менять статус и фидбек
-    if current_user.role != "teacher":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only teachers can review submissions"
-        )
+    """Обновление решения (учитель меняет статус/фидбек, ученик меняет content/files)"""
     
     result = await db.execute(
         select(Submission).where(Submission.id == submission_id)
@@ -171,11 +164,28 @@ async def update_submission(
             detail="Submission not found"
         )
     
-    # Обновляем только переданные поля
-    if submission_data.status is not None:
-        submission.status = submission_data.status
-    if submission_data.feedback is not None:
-        submission.feedback = submission_data.feedback
+    # Проверка прав: кто может редактировать
+    if current_user.role == "teacher":
+        # Учитель меняет статус и фидбек
+        if submission_data.status is not None:
+            submission.status = submission_data.status
+        if submission_data.feedback is not None:
+            submission.feedback = submission_data.feedback
+    elif submission.student_id == current_user.id:
+        # Ученик меняет content и files
+        if submission_data.content is not None:
+            submission.content = submission_data.content
+        if submission_data.files is not None:
+            submission.files = submission_data.files
+        # При редактировании сбрасываем статус на "pending"
+        if submission_data.content is not None or submission_data.files is not None:
+            submission.status = "pending"
+            submission.feedback = None  # Очищаем старый фидбек
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to update this submission"
+        )
     
     await db.commit()
     await db.refresh(submission)

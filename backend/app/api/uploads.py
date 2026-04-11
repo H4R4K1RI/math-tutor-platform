@@ -23,7 +23,16 @@ async def upload_file(
     Возвращает URL для доступа к файлу.
     """
     # Проверяем тип файла
-    allowed_types = ["image/jpeg", "image/png", "image/gif", "application/pdf", "text/plain"]
+    allowed_types = [
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain", "text/csv",
+    "application/zip"
+]
     if file.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,

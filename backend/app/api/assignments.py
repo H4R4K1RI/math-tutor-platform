@@ -6,6 +6,7 @@ from typing import List, Optional
 from app.db.database import get_db
 from app.models.user import User
 from app.models.assignment import Assignment
+from app.models.submission import Submission
 from app.schemas.assignment import (
     AssignmentCreate, AssignmentUpdate, 
     AssignmentResponse, AssignmentListResponse
@@ -95,7 +96,7 @@ async def update_assignment(
     assignment_id: int,
     assignment_data: AssignmentUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_teacher)  # Только учитель
+    current_user: User = Depends(get_current_teacher)
 ):
     """Обновление задания (только для учителя)"""
     
@@ -114,6 +115,19 @@ async def update_assignment(
     update_data = assignment_data.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(assignment, field, value)
+    
+    # Сбрасываем статус всех решений этого задания
+    submissions_result = await db.execute(
+        select(Submission).where(Submission.assignment_id == assignment_id)
+    )
+    submissions = submissions_result.scalars().all()
+    
+    for sub in submissions:
+        sub.status = "pending"
+        sub.feedback = None
+    
+    if submissions:
+        await db.flush()
     
     await db.commit()
     await db.refresh(assignment)

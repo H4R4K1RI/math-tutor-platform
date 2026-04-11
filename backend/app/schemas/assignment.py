@@ -4,7 +4,7 @@ from typing import Optional, List
 
 class AssignmentBase(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
-    description: str = Field(..., min_length=10)
+    description: str = Field(..., min_length=1)
     attachments: Optional[str] = None
     due_date: datetime
     student_id: Optional[int] = None  # Если None — задание для всех
@@ -14,7 +14,7 @@ class AssignmentCreate(AssignmentBase):
 
 class AssignmentUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=3, max_length=255)
-    description: Optional[str] = Field(None, min_length=10)
+    description: Optional[str] = Field(None, min_length=1)
     attachments: Optional[str] = None
     due_date: Optional[datetime] = None
     student_id: Optional[int] = None
@@ -31,6 +31,8 @@ class AssignmentResponse(AssignmentBase):
 class AssignmentListResponse(BaseModel):
     id: int
     title: str
+    description: str  # Добавьте это поле
+    attachments: Optional[str] = None
     due_date: datetime
     teacher_id: int
     student_id: Optional[int] = None
