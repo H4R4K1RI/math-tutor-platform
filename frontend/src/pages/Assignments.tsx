@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
-
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [students, setStudents] = useState<User[]>([]);
@@ -174,7 +174,7 @@ const Assignments: React.FC = () => {
                 <div className="mt-2 p-2 bg-gray-50 rounded">
                   <p className="text-sm text-gray-600 font-medium">Текущий файл:</p>
                   <a 
-                    href={`http://localhost:8000${JSON.parse(existingFileUrl)[0]}`} 
+                    href={`SERVER_URL${JSON.parse(existingFileUrl)[0]}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline text-sm"

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { Assignment, Submission } from '../types';
 import toast from 'react-hot-toast';
-
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const AssignmentDetail: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -87,7 +87,7 @@ const AssignmentDetail: React.FC = () => {
           <div className="mt-4">
             <h3 className="font-semibold">Вложения:</h3>
             {JSON.parse(assignment.attachments).map((url: string, idx: number) => (
-              <a key={idx} href={`http://localhost:8000${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 block hover:underline">
+              <a key={idx} href={`SERVER_URL${url}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 block hover:underline">
                 Скачать файл {idx + 1}
               </a>
             ))}

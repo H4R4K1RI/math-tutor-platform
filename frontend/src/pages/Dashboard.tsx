@@ -4,7 +4,7 @@ import apiClient from '../api/client';
 import { Assignment, Submission } from '../types';
 import { Link } from 'react-router-dom';
 import Spinner from '../components/Spinner';
-
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const Dashboard: React.FC = () => {
   const { user, isTeacher } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -164,7 +164,7 @@ const Dashboard: React.FC = () => {
                                   return files.map((url: string, idx: number) => (
                                     <a 
                                       key={idx} 
-                                      href={`http://localhost:8000${url}`} 
+                                      href={`SERVER_URL${url}`} 
                                       target="_blank" 
                                       rel="noopener noreferrer"
                                       className="text-blue-600 hover:underline block text-sm mt-1"
