@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
-import Pagination from '../components/Pagination';
 
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -18,23 +17,15 @@ const Assignments: React.FC = () => {
     student_id: null as number | null,
   });
 
-  // Пагинация
-  const [skip, setSkip] = useState(0);
-  const [total, setTotal] = useState(0);
-  const limit = 10;
-
   useEffect(() => {
     fetchAssignments();
     fetchStudents();
-  }, [skip]);
+  }, []);
 
   const fetchAssignments = async () => {
     try {
-      const response = await apiClient.get('/assignments', {
-        params: { skip, limit }
-      });
-      setAssignments(response.data.items);
-      setTotal(response.data.total);
+      const response = await apiClient.get('/assignments');
+      setAssignments(response.data);
     } catch (error) {
       console.error('Error fetching assignments:', error);
     }
@@ -146,61 +137,61 @@ const Assignments: React.FC = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Управление заданиями</h1>
+        <h1 className="text-2xl font-bold dark:text-white">Управление заданиями</h1>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition"
         >
           + Создать задание
         </button>
       </div>
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">{editingId ? 'Редактировать задание' : 'Создать задание'}</h2>
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">{editingId ? 'Редактировать задание' : 'Создать задание'}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Название</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Название</label>
               <input
                 type="text"
                 placeholder="Название"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="w-full border rounded p-2"
+                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Описание</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Описание</label>
               <textarea
                 placeholder="Описание"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border rounded p-2"
+                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
                 rows={4}
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Дедлайн</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Дедлайн</label>
               <input
                 type="datetime-local"
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                className="w-full border rounded p-2"
+                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Прикрепить файлы (можно несколько)</label>
-              <input type="file" multiple onChange={handleMultipleFileUpload} className="border rounded p-1" />
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Прикрепить файлы (можно несколько)</label>
+              <input type="file" multiple onChange={handleMultipleFileUpload} className="border rounded-lg p-1 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white" />
               
               {existingAttachmentUrls.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600">Текущие файлы:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Текущие файлы:</p>
                   {existingAttachmentUrls.map((url, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-gray-50 p-1 rounded mt-1">
-                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-blue-600 text-sm">
+                    <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-[#2a2a2a] p-2 rounded mt-1">
+                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-[#2e7d5e] dark:text-[#4a9b6e] text-sm">
                         📎 Файл {idx + 1}
                       </a>
                       <button type="button" onClick={() => removeExistingAttachment(idx)} className="text-red-500 text-sm">
@@ -213,10 +204,10 @@ const Assignments: React.FC = () => {
               
               {attachmentUrls.length > 0 && (
                 <div className="mt-2">
-                  <p className="text-sm text-gray-600">Новые файлы:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Новые файлы:</p>
                   {attachmentUrls.map((url, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-gray-50 p-1 rounded mt-1">
-                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-blue-600 text-sm">
+                    <div key={idx} className="flex items-center justify-between bg-gray-50 dark:bg-[#2a2a2a] p-2 rounded mt-1">
+                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-[#2e7d5e] dark:text-[#4a9b6e] text-sm">
                         📎 Новый файл {idx + 1}
                       </a>
                       <button type="button" onClick={() => removeAttachment(idx)} className="text-red-500 text-sm">
@@ -228,14 +219,14 @@ const Assignments: React.FC = () => {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Назначить ученику</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Назначить ученику</label>
               <select
                 value={formData.student_id === null ? "all" : formData.student_id}
                 onChange={(e) => {
                   const value = e.target.value;
                   setFormData({ ...formData, student_id: value === "all" ? null : parseInt(value) });
                 }}
-                className="w-full border rounded p-2"
+                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
               >
                 <option value="all">📚 Для всех учеников</option>
                 {students.map(student => (
@@ -246,13 +237,13 @@ const Assignments: React.FC = () => {
               </select>
             </div>
             <div className="space-x-2">
-              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+              <button type="submit" className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition">
                 {editingId ? 'Обновить' : 'Создать'}
               </button>
               <button 
                 type="button" 
                 onClick={() => { setShowForm(false); setEditingId(null); setAttachmentUrls([]); setExistingAttachmentUrls([]); }} 
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+                className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg transition"
               >
                 Отмена
               </button>
@@ -261,42 +252,35 @@ const Assignments: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow">
         {assignments.length === 0 ? (
-          <p className="p-4 text-gray-500">Нет заданий</p>
+          <p className="p-4 text-gray-500 dark:text-gray-400">Нет заданий</p>
         ) : (
           assignments.map(assignment => (
-            <div key={assignment.id} className="border-b p-4 hover:bg-gray-50">
-              <h3 className="font-semibold text-lg">{assignment.title}</h3>
-              <p className="text-gray-600 mt-1">{assignment.description}</p>
-              <p className="text-sm text-gray-500 mt-2">
+            <div key={assignment.id} className="border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-100 dark:hover:bg-[#1a2a1a] transition-colors duration-200">
+              <h3 className="font-semibold text-lg dark:text-white">{assignment.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">{assignment.description}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                 Дедлайн: {new Date(assignment.due_date).toLocaleString()}
               </p>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
                 {assignment.student_id === null ? (
-                  <span className="text-blue-600">📚 Для всех учеников</span>
+                  <span className="text-blue-600 dark:text-[#4a9b6e]">📚 Для всех учеников</span>
                 ) : (
                   <span>👤 Для ученика ID: {assignment.student_id}</span>
                 )}
               </p>
               {assignment.attachments && (
-                <p className="text-sm text-blue-600 mt-1">📎 Есть вложения</p>
+                <p className="text-sm text-blue-600 dark:text-[#4a9b6e] mt-1">📎 Есть вложения</p>
               )}
               <div className="mt-3 space-x-2">
-                <button onClick={() => handleEdit(assignment)} className="text-blue-600 hover:underline">Редактировать</button>
-                <button onClick={() => handleDelete(assignment.id)} className="text-red-600 hover:underline">Удалить</button>
+                <button onClick={() => handleEdit(assignment)} className="text-blue-600 dark:text-[#4a9b6e] hover:underline">Редактировать</button>
+                <button onClick={() => handleDelete(assignment.id)} className="text-red-600 dark:text-red-400 hover:underline">Удалить</button>
               </div>
             </div>
           ))
         )}
       </div>
-
-      <Pagination
-        total={total}
-        limit={limit}
-        skip={skip}
-        onPageChange={(newSkip) => setSkip(newSkip)}
-      />
     </div>
   );
 };

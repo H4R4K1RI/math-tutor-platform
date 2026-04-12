@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, func
+from sqlalchemy import select, update, delete
 from typing import List
 
 from app.socket_manager import sio
@@ -85,41 +85,42 @@ async def create_submission(
 
     return new_submission
 
-@router.get("/")
+@router.get("/", response_model=List[SubmissionListResponse])
 async def get_submissions(
-    skip: int = 0,
-    limit: int = 10,
     assignment_id: int = None,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Получение списка решений"""
+    
     if current_user.role == "teacher":
-        query = select(Submission).order_by(Submission.submitted_at)
-        total_query = select(func.count()).select_from(Submission)
-        
+        # Учитель видит все решения
         if assignment_id:
-            query = query.where(Submission.assignment_id == assignment_id)
-            total_query = total_query.where(Submission.assignment_id == assignment_id)
+            result = await db.execute(
+                select(Submission).where(Submission.assignment_id == assignment_id)
+                .order_by(Submission.submitted_at)
+            )
+        else:
+            result = await db.execute(
+                select(Submission).order_by(Submission.submitted_at)
+            )
     else:
-        query = select(Submission).where(Submission.student_id == current_user.id)
-        total_query = select(func.count()).where(Submission.student_id == current_user.id).select_from(Submission)
-        
+        # Ученик видит только свои решения
         if assignment_id:
-            query = query.where(Submission.assignment_id == assignment_id)
-            total_query = total_query.where(Submission.assignment_id == assignment_id)
-
-    result = await db.execute(query.offset(skip).limit(limit))
-    total_result = await db.execute(total_query)
-
+            result = await db.execute(
+                select(Submission).where(
+                    (Submission.student_id == current_user.id) &
+                    (Submission.assignment_id == assignment_id)
+                ).order_by(Submission.submitted_at)
+            )
+        else:
+            result = await db.execute(
+                select(Submission).where(Submission.student_id == current_user.id)
+                .order_by(Submission.submitted_at)
+            )
+    
     submissions = result.scalars().all()
-    total = total_result.scalar()
-
-    return {
-        "items": submissions,
-        "total": total,
-        "skip": skip,
-        "limit": limit
-    }
+    return submissions
 
 @router.get("/{submission_id}", response_model=SubmissionResponse)
 async def get_submission(

@@ -1,33 +1,25 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Assignments from './pages/Assignments';
 import AssignmentDetail from './pages/AssignmentDetail';
 import ReviewSubmissions from './pages/ReviewSubmissions';
-import { initSocket } from './socket';
+import { FiMenu } from 'react-icons/fi';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="text-center py-20">Загрузка...</div>;
-  }
-  
+  if (isLoading) return <div className="text-center py-20">Загрузка...</div>;
   if (!user) return <Navigate to="/login" />;
   return <>{children}</>;
 };
 
 const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isTeacher, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="text-center py-20">Загрузка...</div>;
-  }
-  
+  if (isLoading) return <div className="text-center py-20">Загрузка...</div>;
   if (!user) return <Navigate to="/login" />;
   if (!isTeacher) return <Navigate to="/dashboard" />;
   return <>{children}</>;
@@ -36,41 +28,56 @@ const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
 
-  useEffect(() => {
-    // Инициализируем Socket.IO при загрузке приложения
-    initSocket();
-  }, []);
-
   if (isLoading) {
-    return (
-      <>
-        <Navbar />
-        <div className="text-center py-20">Загрузка приложения...</div>
-      </>
-    );
+    return <div className="text-center py-20">Загрузка приложения...</div>;
   }
 
   return (
-    <>
-      <Navbar />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/assignments" element={<TeacherRoute><Assignments /></TeacherRoute>} />
-        <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetail /></ProtectedRoute>} />
-        <Route path="/review" element={<TeacherRoute><ReviewSubmissions /></TeacherRoute>} />
-        <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
-      </Routes>
-    </>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/assignments" element={<TeacherRoute><Assignments /></TeacherRoute>} />
+      <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetail /></ProtectedRoute>} />
+      <Route path="/review" element={<TeacherRoute><ReviewSubmissions /></TeacherRoute>} />
+      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+    </Routes>
   );
 }
 
 function App() {
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', darkMode.toString());
+  }, [darkMode]);
+
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#1e3a2f] text-white lg:hidden"
+          >
+            <FiMenu size={24} />
+          </button>
+
+          <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+          <main className="lg:ml-64 p-6 transition-all">
+            <AppRoutes />
+          </main>
+        </div>
       </AuthProvider>
     </BrowserRouter>
   );
