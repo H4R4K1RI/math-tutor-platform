@@ -2,16 +2,14 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
-import { socket } from '../socket';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [students, setStudents] = useState<User[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [fileUrl, setFileUrl] = useState('');
-  const [existingFileUrl, setExistingFileUrl] = useState('');
+  const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
+  const [existingAttachmentUrls, setExistingAttachmentUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -23,20 +21,6 @@ const Assignments: React.FC = () => {
     fetchAssignments();
     fetchStudents();
   }, []);
-
-  useEffect(() => {
-  const handleAssignmentUpdate = () => {
-    fetchAssignments();
-  };
-  
-  socket.on('assignment_updated', handleAssignmentUpdate);
-  socket.on('assignment_deleted', handleAssignmentUpdate);
-  
-  return () => {
-    socket.off('assignment_updated', handleAssignmentUpdate);
-    socket.off('assignment_deleted', handleAssignmentUpdate);
-  };
-}, []);
 
   const fetchAssignments = async () => {
     const response = await apiClient.get('/assignments');
@@ -52,24 +36,36 @@ const Assignments: React.FC = () => {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiClient.post('/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    setFileUrl(response.data.url);
-    toast.success('✅ Файл загружен!');
+  const handleMultipleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    const newUrls: string[] = [];
+    for (const file of Array.from(files)) {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await apiClient.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      newUrls.push(response.data.url);
+    }
+    setAttachmentUrls([...attachmentUrls, ...newUrls]);
+    toast.success(`Загружено файлов: ${newUrls.length}`);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachmentUrls(attachmentUrls.filter((_, i) => i !== index));
+  };
+
+  const removeExistingAttachment = (index: number) => {
+    setExistingAttachmentUrls(existingAttachmentUrls.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const attachmentsValue = fileUrl 
-        ? `["${fileUrl}"]` 
-        : (existingFileUrl || null);
+      const allAttachments = [...existingAttachmentUrls, ...attachmentUrls];
+      const attachmentsValue = allAttachments.length > 0 ? JSON.stringify(allAttachments) : null;
     
       const submitData = {
         title: formData.title,
@@ -88,8 +84,8 @@ const Assignments: React.FC = () => {
       }
       setShowForm(false);
       setEditingId(null);
-      setFileUrl('');
-      setExistingFileUrl('');
+      setAttachmentUrls([]);
+      setExistingAttachmentUrls([]);
       setFormData({ title: '', description: '', due_date: '', student_id: null });
       fetchAssignments();
     } catch (error: any) {
@@ -114,31 +110,32 @@ const Assignments: React.FC = () => {
       student_id: assignment.student_id,
     });
     
-    if (assignment.attachments && assignment.attachments !== 'null' && assignment.attachments !== '[]') {
+    if (assignment.attachments) {
       try {
         const files = JSON.parse(assignment.attachments);
         if (Array.isArray(files) && files.length > 0) {
-          setExistingFileUrl(assignment.attachments);
+          setExistingAttachmentUrls(files);
         } else {
-          setExistingFileUrl('');
+          setExistingAttachmentUrls([]);
         }
       } catch (e) {
-        console.error('Error parsing attachments:', e);
-        setExistingFileUrl('');
+        setExistingAttachmentUrls([]);
       }
     } else {
-      setExistingFileUrl('');
+      setExistingAttachmentUrls([]);
     }
-    
+    setAttachmentUrls([]);
     setShowForm(true);
   };
+
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Управление заданиями</h1>
         <button
-          onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setFileUrl(''); setExistingFileUrl(''); }}
+          onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
           className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           + Создать задание
@@ -182,21 +179,38 @@ const Assignments: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Прикрепить файл</label>
-              <input type="file" onChange={handleFileUpload} className="border rounded p-1" />
-              {fileUrl && <p className="text-green-600 text-sm mt-1">✅ Файл загружен</p>}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Прикрепить файлы (можно несколько)</label>
+              <input type="file" multiple onChange={handleMultipleFileUpload} className="border rounded p-1" />
               
-              {existingFileUrl && (
-                <div className="mt-2 p-2 bg-gray-50 rounded">
-                  <p className="text-sm text-gray-600 font-medium">Текущий файл:</p>
-                  <a 
-                    href={`${SERVER_URL}${JSON.parse(existingFileUrl)[0]}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    📎 Скачать текущий файл
-                  </a>
+              {existingAttachmentUrls.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">Текущие файлы:</p>
+                  {existingAttachmentUrls.map((url, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-50 p-1 rounded mt-1">
+                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-blue-600 text-sm">
+                        📎 Файл {idx + 1}
+                      </a>
+                      <button type="button" onClick={() => removeExistingAttachment(idx)} className="text-red-500 text-sm">
+                        ✖ Удалить
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {attachmentUrls.length > 0 && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600">Новые файлы:</p>
+                  {attachmentUrls.map((url, idx) => (
+                    <div key={idx} className="flex items-center justify-between bg-gray-50 p-1 rounded mt-1">
+                      <a href={`${SERVER_URL}${url}`} target="_blank" className="text-blue-600 text-sm">
+                        📎 Новый файл {idx + 1}
+                      </a>
+                      <button type="button" onClick={() => removeAttachment(idx)} className="text-red-500 text-sm">
+                        ✖ Удалить
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -224,7 +238,7 @@ const Assignments: React.FC = () => {
               </button>
               <button 
                 type="button" 
-                onClick={() => { setShowForm(false); setEditingId(null); setFileUrl(''); setExistingFileUrl(''); }} 
+                onClick={() => { setShowForm(false); setEditingId(null); setAttachmentUrls([]); setExistingAttachmentUrls([]); }} 
                 className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
               >
                 Отмена
@@ -253,7 +267,7 @@ const Assignments: React.FC = () => {
                 )}
               </p>
               {assignment.attachments && (
-                <p className="text-sm text-blue-600 mt-1">📎 Есть вложение</p>
+                <p className="text-sm text-blue-600 mt-1">📎 Есть вложения</p>
               )}
               <div className="mt-3 space-x-2">
                 <button onClick={() => handleEdit(assignment)} className="text-blue-600 hover:underline">Редактировать</button>

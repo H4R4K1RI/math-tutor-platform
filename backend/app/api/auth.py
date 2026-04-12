@@ -36,7 +36,7 @@ async def register(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Пользователь с таким email уже зарегистрирован"
         )
     
     new_user = User(
@@ -72,13 +72,13 @@ async def login(
     if not user or not verify_password(login_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
+            detail="Неверный email или пароль",
         )
     
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User account is disabled"
+            detail="Аккаунт пользователя отключён"
         )
     
     # Создаём токен
@@ -94,19 +94,19 @@ async def login(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=False,  # True только при HTTPS
+        secure=True,  # True только при HTTPS
         samesite="lax",
         max_age=30 * 60,  # 30 минут
         path="/"
     )
     
-    return {"message": "Login successful"}
+    return {"message": "Вход выполнен успешно"}
 
 @router.post("/logout")
 async def logout(response: Response):
     """Выход из системы — удаляем cookie"""
     response.delete_cookie("access_token", path="/")
-    return {"message": "Logout successful"}
+    return {"message": "Выход выполнен успешно"}
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(

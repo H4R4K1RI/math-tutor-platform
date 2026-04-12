@@ -17,7 +17,7 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 app = FastAPI(
     title="Math Tutor Platform",
     description="Платформа для репетитора по математике",
-    version="0.6.0",
+    version="0.7.0",
     swagger_ui_parameters={
         "persistAuthorization": True,
     }
@@ -41,6 +41,9 @@ app.add_middleware(
     allow_origins=[
         "http://90.156.170.9:5173",
         "http://localhost:5173",
+        "http://tutor-platform.ru:5173",
+        "http://www.tutor-platform.ru:5173",
+        "https://tutor-platform.ru",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -49,7 +52,7 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["90.156.170.9", "localhost", "127.0.0.1"]
+    allowed_hosts=["90.156.170.9", "localhost", "127.0.0.1", "tutor-platform.ru", "www.tutor-platform.ru"]
 )
 
 @app.middleware("http")
