@@ -5,12 +5,14 @@ import os
 from app.api import auth, assignments, submissions, uploads, users
 from app.socket_manager import socket_app, sio
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
 
 app = FastAPI(
     title="Math Tutor Platform",
