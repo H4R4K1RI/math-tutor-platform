@@ -1,34 +1,40 @@
 import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Submission, Assignment } from '../types';
-import toast from 'react-hot-toast';
 import { socket } from '../socket';
+import Pagination from '../components/Pagination';
 
-const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 const ReviewSubmissions: React.FC = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Пагинация
+  const [skip, setSkip] = useState(0);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const fetchData = async () => {
     try {
       const [submissionsRes, assignmentsRes] = await Promise.all([
-        apiClient.get('/submissions'),
+        apiClient.get('/submissions', { params: { skip, limit } }),
         apiClient.get('/assignments')
       ]);
-      setSubmissions(submissionsRes.data);
+      setSubmissions(submissionsRes.data.items);
+      setTotal(submissionsRes.data.total);
       setAssignments(assignmentsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [skip]);
 
+  // WebSocket слушатели для автообновления
   useEffect(() => {
     const handleSubmissionUpdate = (data: any) => {
       console.log('Review page: Submission event received', data);
@@ -57,7 +63,7 @@ const ReviewSubmissions: React.FC = () => {
       fetchData();
     } catch (error) {
       console.error('Error updating submission:', error);
-      toast.error('❌ Ошибка при обновлении');
+      alert('Ошибка при обновлении');
     }
   };
 
@@ -65,6 +71,8 @@ const ReviewSubmissions: React.FC = () => {
     const assignment = assignments.find(a => a.id === assignmentId);
     return assignment?.title || `Задание #${assignmentId}`;
   };
+
+  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 
   if (loading) {
     return <div className="text-center py-10">Загрузка...</div>;
@@ -85,17 +93,15 @@ const ReviewSubmissions: React.FC = () => {
                   <h3 className="font-semibold text-lg">{getAssignmentTitle(sub.assignment_id)}</h3>
                   <p className="text-gray-600 mt-1">Ученик ID: {sub.student_id}</p>
                   
-                  {/* Текст решения */}
                   {sub.content && (
-  <div className="mt-3">
-    <p className="font-medium text-gray-700">Решение ученика:</p>
-    <p className="text-gray-700 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap">
-      {sub.content}
-    </p>
-  </div>
-)}
+                    <div className="mt-3">
+                      <p className="font-medium text-gray-700">Решение ученика:</p>
+                      <p className="text-gray-700 bg-gray-50 p-3 rounded mt-1 whitespace-pre-wrap">
+                        {sub.content}
+                      </p>
+                    </div>
+                  )}
                   
-                  {/* Файлы */}
                   {sub.files && sub.files !== 'null' && sub.files !== '[]' && (
                     <div className="mt-3">
                       <p className="font-medium text-gray-700">Прикреплённые файлы:</p>
@@ -124,7 +130,6 @@ const ReviewSubmissions: React.FC = () => {
                     </div>
                   )}
                   
-                  {/* Фидбек учителя */}
                   {sub.feedback && (
                     <div className="mt-3">
                       <p className="font-medium text-gray-700">Фидбек:</p>
@@ -183,6 +188,13 @@ const ReviewSubmissions: React.FC = () => {
           ))}
         </div>
       )}
+
+      <Pagination
+        total={total}
+        limit={limit}
+        skip={skip}
+        onPageChange={(newSkip) => setSkip(newSkip)}
+      />
     </div>
   );
 };
