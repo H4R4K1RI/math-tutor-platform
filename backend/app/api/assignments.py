@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete
+from sqlalchemy import select, update, delete, func
 from typing import List, Optional
 
 from app.socket_manager import sio
@@ -42,29 +42,38 @@ async def create_assignment(
     
     return new_assignment
 
-@router.get("/", response_model=List[AssignmentListResponse])
+@router.get("/")
 async def get_assignments(
+    skip: int = 0,
+    limit: int = 10,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Получение списка заданий"""
-    
     if current_user.role == "teacher":
-        # Учитель видит все задания
-        result = await db.execute(
-            select(Assignment).order_by(Assignment.due_date)
-        )
+        query = select(Assignment).order_by(Assignment.due_date)
+        total_query = select(func.count()).select_from(Assignment)
     else:
-        # Ученик видит только свои задания или общие (student_id = None)
-        result = await db.execute(
-            select(Assignment).where(
-                (Assignment.student_id == current_user.id) | 
-                (Assignment.student_id.is_(None))
-            ).order_by(Assignment.due_date)
-        )
-    
+        query = select(Assignment).where(
+            (Assignment.student_id == current_user.id) |
+            (Assignment.student_id.is_(None))
+        ).order_by(Assignment.due_date)
+        total_query = select(func.count()).where(
+            (Assignment.student_id == current_user.id) |
+            (Assignment.student_id.is_(None))
+        ).select_from(Assignment)
+
+    result = await db.execute(query.offset(skip).limit(limit))
+    total_result = await db.execute(total_query)
+
     assignments = result.scalars().all()
-    return assignments
+    total = total_result.scalar()
+
+    return {
+        "items": assignments,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
 
 @router.get("/{assignment_id}", response_model=AssignmentResponse)
 async def get_assignment(

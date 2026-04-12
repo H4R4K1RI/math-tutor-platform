@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
+import Pagination from '../components/Pagination';
 
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -17,14 +18,26 @@ const Assignments: React.FC = () => {
     student_id: null as number | null,
   });
 
+  // Пагинация
+  const [skip, setSkip] = useState(0);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
+
   useEffect(() => {
     fetchAssignments();
     fetchStudents();
-  }, []);
+  }, [skip]);
 
   const fetchAssignments = async () => {
-    const response = await apiClient.get('/assignments');
-    setAssignments(response.data);
+    try {
+      const response = await apiClient.get('/assignments', {
+        params: { skip, limit }
+      });
+      setAssignments(response.data.items);
+      setTotal(response.data.total);
+    } catch (error) {
+      console.error('Error fetching assignments:', error);
+    }
   };
 
   const fetchStudents = async () => {
@@ -277,6 +290,13 @@ const Assignments: React.FC = () => {
           ))
         )}
       </div>
+
+      <Pagination
+        total={total}
+        limit={limit}
+        skip={skip}
+        onPageChange={(newSkip) => setSkip(newSkip)}
+      />
     </div>
   );
 };
