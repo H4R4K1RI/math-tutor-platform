@@ -1,13 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import apiClient from '../api/client';
-import { User, AuthResponse } from '../types';
+import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, full_name: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isTeacher: boolean;
   isLoading: boolean;
 }
@@ -22,45 +21,27 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      const storedToken = localStorage.getItem('access_token');
-      console.log('=== AUTH CHECK ===');
-      console.log('1. Stored token:', storedToken ? `${storedToken.substring(0, 50)}...` : 'null');
-      
-      if (storedToken) {
-        setToken(storedToken);
-        try {
-          console.log('2. Fetching /auth/me...');
-          const response = await apiClient.get('/auth/me');
-          console.log('3. User loaded:', response.data);
-          setUser(response.data);
-        } catch (error: any) {
-          console.error('4. Error:', error.response?.status, error.response?.data);
-          localStorage.removeItem('access_token');
-          setToken(null);
-        }
-      } else {
-        console.log('No token found');
-      }
+  const fetchUser = async () => {
+    try {
+      const response = await apiClient.get('/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      setUser(null);
+    } finally {
       setIsLoading(false);
-      console.log('=== AUTH CHECK COMPLETE ===');
-    };
-    
-    loadUser();
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await apiClient.post<AuthResponse>('/auth/login', { email, password });
-    const { access_token } = response.data;
-    localStorage.setItem('access_token', access_token);
-    setToken(access_token);
-    
-    const userResponse = await apiClient.get<User>('/auth/me');
-    setUser(userResponse.data);
+    await apiClient.post('/auth/login', { email, password });
+    await fetchUser();
   };
 
   const register = async (email: string, full_name: string, password: string) => {
@@ -68,16 +49,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await login(email, password);
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    setToken(null);
+  const logout = async () => {
+    await apiClient.post('/auth/logout');
     setUser(null);
   };
 
   const isTeacher = user?.role === 'teacher';
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, isTeacher, isLoading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, isTeacher, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

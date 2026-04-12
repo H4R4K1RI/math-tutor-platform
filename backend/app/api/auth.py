@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from app.db.database import get_db
@@ -11,7 +11,6 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 @router.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
-    """Тест подключения к БД"""
     try:
         result = await db.execute(text("SELECT 1"))
         value = result.scalar()
@@ -24,7 +23,6 @@ async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db)
 ):
-    # Проверяем, существует ли пользователь
     result = await db.execute(
         select(User).where(User.email == user_data.email)
     )
@@ -36,7 +34,6 @@ async def register(
             detail="Email already registered"
         )
     
-    # Создаём нового пользователя
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
@@ -51,14 +48,14 @@ async def register(
     
     return new_user
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 async def login(
     login_data: UserLogin,
+    response: Response,
     db: AsyncSession = Depends(get_db)
 ):
-    """Вход в систему, возвращает токены"""
+    """Вход в систему, устанавливает HttpOnly cookie с токеном"""
     
-    # Ищем пользователя
     result = await db.execute(
         select(User).where(User.email == login_data.email)
     )
@@ -68,7 +65,6 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
         )
     
     if not user.is_active:
@@ -77,25 +73,35 @@ async def login(
             detail="User account is disabled"
         )
     
-    # Создаём токены
+    # Создаём токен
     token_data = {
         "sub": user.email,
         "user_id": user.id,
         "role": user.role
     }
-    
     access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token(token_data)
     
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer"
-    }
+    # Устанавливаем HttpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=False,  # True только при HTTPS
+        samesite="lax",
+        max_age=30 * 60,  # 30 минут
+        path="/"
+    )
+    
+    return {"message": "Login successful"}
+
+@router.post("/logout")
+async def logout(response: Response):
+    """Выход из системы — удаляем cookie"""
+    response.delete_cookie("access_token", path="/")
+    return {"message": "Logout successful"}
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
-    """Получение информации о текущем пользователе"""
     return current_user
