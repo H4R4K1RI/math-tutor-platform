@@ -1,9 +1,16 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from app.api import auth, assignments, submissions, uploads, users
 from app.socket_manager import socket_app, sio
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi.responses import JSONResponse
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
     title="Math Tutor Platform",
@@ -12,6 +19,30 @@ app = FastAPI(
     swagger_ui_parameters={
         "persistAuthorization": True,
     }
+)
+
+app.state.limiter = limiter
+
+# Кастомный обработчик rate limit
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={
+            "detail": "Слишком много попыток входа. Пожалуйста, подождите 1 минуту перед следующей попыткой."
+        }
+    )
+
+# Настройка CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://90.156.170.9:5173",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.add_middleware(
@@ -30,17 +61,6 @@ async def add_security_headers(request, call_next):
     # response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response
 
-# Настройка CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://90.156.170.9:5173",
-        "http://localhost:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Статика
 static_dir = "uploads"

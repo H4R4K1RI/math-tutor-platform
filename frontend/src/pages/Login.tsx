@@ -10,14 +10,24 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await login(email, password);
-      navigate('/dashboard');
-    } catch (err) {
+  e.preventDefault();
+  setError('');
+  try {
+    await login(email, password);
+    navigate('/dashboard');
+  } catch (err: any) {
+    console.error('Login error:', err);
+    const detail = err.response?.data?.detail;
+    
+    if (detail && typeof detail === 'string') {
+      setError(detail);
+    } else if (detail && Array.isArray(detail)) {
+      setError(detail[0]?.msg || 'Ошибка валидации');
+    } else {
       setError('Неверный email или пароль');
     }
-  };
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

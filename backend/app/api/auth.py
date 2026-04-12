@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, text
 from app.db.database import get_db
@@ -6,8 +6,13 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
 from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token
 from app.core.dependencies import get_current_user
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+limiter = Limiter(key_func=get_remote_address)
 
 @router.get("/test-db")
 async def test_db(db: AsyncSession = Depends(get_db)):
@@ -48,8 +53,11 @@ async def register(
     
     return new_user
 
+
 @router.post("/login")
+@limiter.limit("10/minute")
 async def login(
+    request: Request,
     login_data: UserLogin,
     response: Response,
     db: AsyncSession = Depends(get_db)
