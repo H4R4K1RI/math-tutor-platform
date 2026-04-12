@@ -14,6 +14,22 @@ app = FastAPI(
     }
 )
 
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["90.156.170.9", "localhost", "127.0.0.1"]
+)
+
+@app.middleware("http")
+async def add_security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    # CSP пока отключаем для простоты, но можно настроить позже
+    # response.headers["Content-Security-Policy"] = "default-src 'self'"
+    return response
+
 # Настройка CORS
 app.add_middleware(
     CORSMiddleware,
