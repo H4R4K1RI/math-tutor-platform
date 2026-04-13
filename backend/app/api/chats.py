@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc
+from sqlalchemy import select, func, desc, update
 from typing import List, Optional
 
 from app.db.database import get_db
 from app.models.user import User
 from app.models.assignment import Assignment
 from app.models.chat import Chat, Message
-from app.schemas.chat import ChatResponse, MessageResponse, MessageCreate
+from app.schemas.chat import ChatResponse, MessageResponse
 from app.core.dependencies import get_current_user
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
-@router.get("/", response_model=List[ChatResponse])
+@router.get("/")
 async def get_chats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -34,10 +34,8 @@ async def get_chats(
     
     chats = result.scalars().all()
     
-    # Для каждого чата получаем последнее сообщение и количество непрочитанных
     response = []
     for chat in chats:
-        # Последнее сообщение
         last_msg_result = await db.execute(
             select(Message)
             .where(Message.chat_id == chat.id)
@@ -46,7 +44,6 @@ async def get_chats(
         )
         last_message = last_msg_result.scalar_one_or_none()
         
-        # Непрочитанные сообщения
         unread_result = await db.execute(
             select(func.count()).where(
                 (Message.chat_id == chat.id) &
@@ -56,7 +53,6 @@ async def get_chats(
         )
         unread_count = unread_result.scalar() or 0
         
-        # Получаем имя собеседника
         other_user_id = chat.teacher_id if current_user.id == chat.student_id else chat.student_id
         user_result = await db.execute(select(User).where(User.id == other_user_id))
         other_user = user_result.scalar_one_or_none()
@@ -75,7 +71,7 @@ async def get_chats(
     
     return response
 
-@router.get("/{chat_id}/messages", response_model=List[MessageResponse])
+@router.get("/{chat_id}/messages")
 async def get_messages(
     chat_id: int,
     limit: int = 50,
@@ -85,25 +81,15 @@ async def get_messages(
 ):
     """Получить историю сообщений чата"""
     
-    # Проверяем, имеет ли пользователь доступ к чату
-    result = await db.execute(
-        select(Chat).where(Chat.id == chat_id)
-    )
+    result = await db.execute(select(Chat).where(Chat.id == chat_id))
     chat = result.scalar_one_or_none()
     
     if not chat:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Chat not found"
-        )
+        raise HTTPException(status_code=404, detail="Chat not found")
     
     if current_user.role != "teacher" and current_user.id not in (chat.teacher_id, chat.student_id):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied"
-        )
+        raise HTTPException(status_code=403, detail="Access denied")
     
-    # Получаем сообщения
     result = await db.execute(
         select(Message)
         .where(Message.chat_id == chat_id)
@@ -125,12 +111,8 @@ async def create_chat(
     """Создать новый чат (только для учителя)"""
     
     if current_user.role != "teacher":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only teachers can create chats"
-        )
+        raise HTTPException(status_code=403, detail="Only teachers can create chats")
     
-    # Проверяем, существует ли уже чат
     result = await db.execute(
         select(Chat).where(
             (Chat.teacher_id == current_user.id) &
@@ -140,7 +122,7 @@ async def create_chat(
     existing_chat = result.scalar_one_or_none()
     
     if existing_chat:
-        return {"id": existing_chat.id, "message": "Chat already exists"}
+        return {"chat_id": existing_chat.id}
     
     new_chat = Chat(
         teacher_id=current_user.id,
@@ -152,4 +134,35 @@ async def create_chat(
     await db.commit()
     await db.refresh(new_chat)
     
-    return {"id": new_chat.id, "message": "Chat created"}
+    return {"chat_id": new_chat.id}
+
+@router.get("/student/{student_id}")
+async def get_or_create_chat_with_student(
+    student_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Получить или создать чат с учеником (для учителя)"""
+    
+    if current_user.role != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can create chats")
+    
+    result = await db.execute(
+        select(Chat).where(
+            (Chat.teacher_id == current_user.id) &
+            (Chat.student_id == student_id)
+        )
+    )
+    chat = result.scalar_one_or_none()
+    
+    if not chat:
+        chat = Chat(
+            teacher_id=current_user.id,
+            student_id=student_id,
+            assignment_id=None
+        )
+        db.add(chat)
+        await db.commit()
+        await db.refresh(chat)
+    
+    return {"chat_id": chat.id}

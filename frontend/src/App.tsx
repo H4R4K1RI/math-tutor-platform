@@ -45,6 +45,7 @@ function AppRoutes() {
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
       <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
       <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+      <Route path="/chat/student/:studentId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
     </Routes>
   );
 }

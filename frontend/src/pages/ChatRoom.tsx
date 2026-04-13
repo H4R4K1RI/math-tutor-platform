@@ -15,22 +15,44 @@ interface Message {
 }
 
 const ChatRoom: React.FC = () => {
-  const { id } = useParams();
+  const { id, studentId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [otherUserName, setOtherUserName] = useState('');
+  const [chatId, setChatId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Инициализация чата (если перешли по studentId)
+  useEffect(() => {
+    const initChat = async () => {
+      if (studentId) {
+        try {
+          const response = await apiClient.get(`/chats/student/${studentId}`);
+          setChatId(response.data.chat_id);
+          navigate(`/chat/${response.data.chat_id}`, { replace: true });
+        } catch (error) {
+          console.error('Error creating chat:', error);
+          navigate('/chats');
+        }
+        return;
+      }
+      if (id) {
+        setChatId(parseInt(id));
+      }
+    };
+    
+    initChat();
+  }, [id, studentId, navigate]);
+
   const fetchMessages = async () => {
+    if (!chatId) return;
     try {
-      const response = await apiClient.get(`/chats/${id}/messages`);
+      const response = await apiClient.get(`/chats/${chatId}/messages`);
       setMessages(response.data);
-      
-      // Отмечаем сообщения как прочитанные
-      socket.emit('mark_messages_read', { chat_id: parseInt(id!), user_id: user?.id });
+      socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
     } catch (error) {
       console.error('Error fetching messages:', error);
       navigate('/chats');
@@ -40,9 +62,10 @@ const ChatRoom: React.FC = () => {
   };
 
   const fetchChatInfo = async () => {
+    if (!chatId) return;
     try {
       const response = await apiClient.get('/chats');
-      const chat = response.data.find((c: any) => c.id === parseInt(id!));
+      const chat = response.data.find((c: any) => c.id === chatId);
       if (chat) {
         setOtherUserName(chat.other_user_name);
       }
@@ -52,24 +75,26 @@ const ChatRoom: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchMessages();
-    fetchChatInfo();
-    
-    socket.emit('join_chat', { chat_id: parseInt(id!) });
-    
-    socket.on('new_message', (data: any) => {
-      if (data.chat_id === parseInt(id!)) {
-        setMessages(prev => [...prev, data]);
-        if (data.sender_id !== user?.id) {
-          socket.emit('mark_messages_read', { chat_id: parseInt(id!), user_id: user?.id });
+    if (chatId) {
+      fetchMessages();
+      fetchChatInfo();
+      
+      socket.emit('join_chat', { chat_id: chatId });
+      
+      socket.on('new_message', (data: any) => {
+        if (data.chat_id === chatId) {
+          setMessages(prev => [...prev, data]);
+          if (data.sender_id !== user?.id) {
+            socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+          }
         }
-      }
-    });
-    
-    return () => {
-      socket.off('new_message');
-    };
-  }, [id]);
+      });
+      
+      return () => {
+        socket.off('new_message');
+      };
+    }
+  }, [chatId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,10 +102,10 @@ const ChatRoom: React.FC = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !chatId) return;
     
     socket.emit('send_message', {
-      chat_id: parseInt(id!),
+      chat_id: chatId,
       sender_id: user?.id,
       message: newMessage.trim()
     });
