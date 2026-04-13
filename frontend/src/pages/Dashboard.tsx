@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
                           </span>
                           {submission.status !== 'approved' && (
                             <Link to={`/assignment/${assignment.id}`}>
-                              <button className="text-sm bg-orange-500 text-white px-3 py-1 rounded-lg hover:bg-orange-600 transition">
+                              <button className="text-gray-700 dark:text-gray-300 hover:text-[#2e7d5e] dark:hover:text-[#4a9b6e] transition-colors duration-200">
                                 ✏️ {submission.status === 'rejected' ? 'Исправить' : 'Редактировать'}
                               </button>
                             </Link>

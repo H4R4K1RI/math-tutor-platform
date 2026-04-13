@@ -32,9 +32,9 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#1e3a2f] to-[#2d5a3f] dark:from-[#0a0a0a] dark:to-[#1a1a1a]">
-      <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-white mb-2">Добро пожаловать</h2>
+    <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-[#0a0f0a] dark:to-[#0d1b12] overflow-hidden">
+      <div className="bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-2">Добро пожаловать</h2>
         <p className="text-center text-gray-500 dark:text-gray-400 mb-6">Войдите в свой аккаунт</p>
 
         {error && (
@@ -43,14 +43,14 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2d5a3f] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
               required
             />
           </div>
@@ -61,14 +61,14 @@ const Login: React.FC = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2d5a3f] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
               required
             />
           </div>
 
           <button
             type="submit"
-            className="w-full bg-[#2d5a3f] hover:bg-[#1e3a2f] text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            className="w-full border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 bg-transparent"
           >
             Войти
           </button>
@@ -76,7 +76,7 @@ const Login: React.FC = () => {
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
           Нет аккаунта?{' '}
-          <Link to="/register" className="text-[#2d5a3f] dark:text-[#4a9b6e] hover:underline font-medium">
+          <Link to="/register" className="text-[#2e7d5e] dark:text-[#4a9b6e] hover:underline font-medium">
             Зарегистрироваться
           </Link>
         </p>

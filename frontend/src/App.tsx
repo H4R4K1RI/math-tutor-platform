@@ -50,7 +50,7 @@ function App() {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
   });
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     if (darkMode) {
@@ -65,17 +65,19 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+          {/* Кнопка для мобильных и ПК */}
           <button
-            onClick={() => setSidebarOpen(true)}
-            className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#1e3a2f] text-white lg:hidden"
-          >
-            <FiMenu size={24} />
-          </button>
+  onClick={() => setSidebarOpen(!sidebarOpen)}
+  className="fixed top-4 left-4 z-50 p-2 rounded-lg border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white bg-transparent transition-all duration-200 shadow-md"
+  aria-label="Toggle sidebar"
+>
+  <FiMenu size={24} />
+</button>
 
           <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-          <main className="lg:ml-64 p-6 transition-all">
-            <AppRoutes />
+          <main className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+              <AppRoutes />
           </main>
         </div>
       </AuthProvider>

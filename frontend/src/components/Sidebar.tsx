@@ -29,10 +29,16 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-[#0d1b12] text-gray-800 dark:text-gray-200 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        }`}
       >
         <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-          <Link to="/" className="text-xl font-bold block text-center text-[#2e7d5e] dark:text-[#2e7d5e]">📐 Math Tutor</Link>
+          <Link
+  to="/"
+  onClick={onClose}
+  className="text-xl font-bold block text-center text-[#2e7d5e] dark:text-[#2e7d5e]"
+>
+  📐 Math Tutor
+</Link>
         </div>
 
         <nav className="flex-1 py-6">

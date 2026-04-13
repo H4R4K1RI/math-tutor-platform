@@ -25,6 +25,7 @@ const Assignments: React.FC = () => {
   const fetchAssignments = async () => {
     try {
       const response = await apiClient.get('/assignments');
+      console.log('Assignments:', response.data);
       setAssignments(response.data);
     } catch (error) {
       console.error('Error fetching assignments:', error);
@@ -140,7 +141,7 @@ const Assignments: React.FC = () => {
         <h1 className="text-2xl font-bold dark:text-white">Управление заданиями</h1>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
-          className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition"
+          className="border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
         >
           + Создать задание
         </button>
