@@ -78,11 +78,6 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
                 <Link to="/chats" onClick={onClose} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg">
                   <FiMessageCircle size={20} />
                   <span>Чаты</span>
-                  {unreadCount > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-0.5">
-                      {unreadCount}
-                    </span>
-                  )}
                 </Link>
               </>
             )}
