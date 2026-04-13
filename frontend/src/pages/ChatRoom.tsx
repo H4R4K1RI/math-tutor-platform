@@ -25,7 +25,6 @@ const ChatRoom: React.FC = () => {
   const [chatId, setChatId] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Инициализация чата (если перешли по studentId)
   useEffect(() => {
     const initChat = async () => {
       if (studentId) {
@@ -133,21 +132,22 @@ const ChatRoom: React.FC = () => {
               className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                  msg.sender_id === user?.id
-                    ? 'bg-[#2e7d5e] text-white'
-                    : 'bg-white dark:bg-[#2a2a2a] text-gray-800 dark:text-gray-200 shadow'
-                }`}
-              >
-                <p className="break-words">{msg.message}</p>
-                <p className={`text-xs mt-1 ${
-                  msg.sender_id === user?.id
-                    ? 'text-green-100'
-                    : 'text-gray-500 dark:text-gray-400'
-                }`}>
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
+  className={`max-w-[70%] rounded-lg px-4 py-2 shadow ${
+    msg.sender_id === user?.id
+      ? 'text-gray-900 dark:text-white'
+      : 'text-gray-900 dark:text-white'
+  }`}
+  style={{
+    backgroundColor: msg.sender_id === user?.id 
+      ? (document.documentElement.classList.contains('dark') ? '#2e7d5e' : '#d4e6d4')
+      : (document.documentElement.classList.contains('dark') ? '#374151' : '#e5e5e5')
+  }}
+>
+  <p className="break-words">{msg.message}</p>
+  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+  </p>
+</div>
             </div>
           ))
         )}
