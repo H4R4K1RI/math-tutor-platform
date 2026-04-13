@@ -9,6 +9,7 @@ import Assignments from './pages/Assignments';
 import AssignmentDetail from './pages/AssignmentDetail';
 import ReviewSubmissions from './pages/ReviewSubmissions';
 import { FiMenu } from 'react-icons/fi';
+import Chats from './pages/Chats';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
@@ -41,6 +42,7 @@ function AppRoutes() {
       <Route path="/assignment/:id" element={<ProtectedRoute><AssignmentDetail /></ProtectedRoute>} />
       <Route path="/review" element={<TeacherRoute><ReviewSubmissions /></TeacherRoute>} />
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+      <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
     </Routes>
   );
 }
