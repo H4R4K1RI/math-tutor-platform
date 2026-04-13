@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-from app.api import auth, assignments, submissions, uploads, users
+from app.api import auth, assignments, submissions, uploads, users, chats
 from app.socket_manager import socket_app, sio
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
@@ -78,6 +78,7 @@ app.include_router(assignments.router, prefix="/api", tags=["assignments"])
 app.include_router(submissions.router, prefix="/api", tags=["submissions"])
 app.include_router(uploads.router, prefix="/api", tags=["upload"])
 app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(chats.router, prefix="/api", tags=["chats"])
 
 @app.get("/")
 async def root():
