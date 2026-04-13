@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
 import { socket } from '../socket';
+import { useAuth } from '../context/AuthContext';
 import { FiMessageCircle, FiPlus } from 'react-icons/fi';
 
 interface Chat {
@@ -21,6 +22,7 @@ interface Student {
 }
 
 const Chats: React.FC = () => {
+  const { user, isTeacher } = useAuth();
   const [chats, setChats] = useState<Chat[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,9 @@ const Chats: React.FC = () => {
         <div className="text-center py-20 text-gray-500 dark:text-gray-400">
           <FiMessageCircle size={48} className="mx-auto mb-4 opacity-50" />
           <p>У вас пока нет чатов</p>
-          <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>
+          {isTeacher && (
+            <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
@@ -131,14 +135,16 @@ const Chats: React.FC = () => {
         </div>
       )}
 
-      {/* Плавающая кнопка */}
-      <button
-        onClick={() => setShowModal(true)}
-        className="fixed bottom-6 right-6 bg-[#2e7d5e] hover:bg-[#1e5a44] text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-50"
-        aria-label="Новый чат"
-      >
-        <FiPlus size={24} />
-      </button>
+      {/* Плавающая кнопка только для учителя */}
+      {isTeacher && (
+        <button
+          onClick={() => setShowModal(true)}
+          className="fixed bottom-6 right-6 bg-[#2e7d5e] hover:bg-[#1e5a44] text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-50"
+          aria-label="Новый чат"
+        >
+          <FiPlus size={24} />
+        </button>
+      )}
 
       {/* Модальное окно */}
       {showModal && (
@@ -146,21 +152,21 @@ const Chats: React.FC = () => {
           <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-xl p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4 dark:text-white">Выберите ученика</h2>
             <div className="space-y-2 max-h-96 overflow-y-auto">
-  {students.map(student => (
-    <button
-      key={student.id}
-      onClick={() => setSelectedStudent(student.id)}
-      className={`w-full text-left p-3 rounded-lg transition ${
-  selectedStudent === student.id
-    ? '!bg-[#2e7d5e] !text-white'
-    : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#3a3a3a]'
-}`}
-    >
-      <p className="font-medium">{student.full_name}</p>
-      <p className="text-sm opacity-75">{student.email}</p>
-    </button>
-  ))}
-</div>
+              {students.map(student => (
+                <button
+                  key={student.id}
+                  onClick={() => setSelectedStudent(student.id)}
+                  className={`w-full text-left p-3 rounded-lg transition ${
+                    selectedStudent === student.id
+                      ? '!bg-[#2e7d5e] !text-white'
+                      : 'bg-gray-100 dark:bg-[#2a2a2a] text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#3a3a3a]'
+                  }`}
+                >
+                  <p className="font-medium">{student.full_name}</p>
+                  <p className="text-sm opacity-75">{student.email}</p>
+                </button>
+              ))}
+            </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
                 onClick={() => setShowModal(false)}

@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { socket } from '../socket';
 import { useAuth } from '../context/AuthContext';
-import { FiSend } from 'react-icons/fi';
+import { FiSend, FiSmile } from 'react-icons/fi';
+import EmojiPicker from 'emoji-picker-react';
 
 interface Message {
   id: number;
@@ -15,7 +16,7 @@ interface Message {
 }
 
 const ChatRoom: React.FC = () => {
-  const { id, studentId } = useParams();
+  const { id, studentId, assignmentId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -23,28 +24,36 @@ const ChatRoom: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [otherUserName, setOtherUserName] = useState('');
   const [chatId, setChatId] = useState<number | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Инициализация чата
   useEffect(() => {
     const initChat = async () => {
-      if (studentId) {
-        try {
+      try {
+        if (assignmentId) {
+          const response = await apiClient.get(`/chats/assignment/${assignmentId}`);
+          setChatId(response.data.chat_id);
+          navigate(`/chat/${response.data.chat_id}`, { replace: true });
+          return;
+        }
+        if (studentId) {
           const response = await apiClient.get(`/chats/student/${studentId}`);
           setChatId(response.data.chat_id);
           navigate(`/chat/${response.data.chat_id}`, { replace: true });
-        } catch (error) {
-          console.error('Error creating chat:', error);
-          navigate('/chats');
+          return;
         }
-        return;
-      }
-      if (id) {
-        setChatId(parseInt(id));
+        if (id) {
+          setChatId(parseInt(id));
+        }
+      } catch (error) {
+        console.error('Error initializing chat:', error);
+        navigate('/chats');
       }
     };
     
     initChat();
-  }, [id, studentId, navigate]);
+  }, [id, studentId, assignmentId, navigate]);
 
   const fetchMessages = async () => {
     if (!chatId) return;
@@ -132,29 +141,32 @@ const ChatRoom: React.FC = () => {
               className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
             >
               <div
-  className={`max-w-[70%] rounded-lg px-4 py-2 shadow ${
-    msg.sender_id === user?.id
-      ? 'text-gray-900 dark:text-white'
-      : 'text-gray-900 dark:text-white'
-  }`}
-  style={{
-    backgroundColor: msg.sender_id === user?.id 
-      ? (document.documentElement.classList.contains('dark') ? '#2e7d5e' : '#d4e6d4')
-      : (document.documentElement.classList.contains('dark') ? '#374151' : '#e5e5e5')
-  }}
->
-  <p className="break-words">{msg.message}</p>
-  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-  </p>
-</div>
+                className={`max-w-[70%] rounded-lg px-4 py-2 shadow ${
+                  msg.sender_id === user?.id
+                    ? '!bg-green-100 dark:!bg-green-800 text-gray-900 dark:text-white'
+                    : '!bg-gray-100 dark:!bg-gray-700 text-gray-900 dark:text-white'
+                }`}
+              >
+                <p className="break-words">{msg.message}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </p>
+              </div>
             </div>
           ))
         )}
         <div ref={messagesEndRef} />
       </div>
       
-      <form onSubmit={sendMessage} className="mt-4 flex gap-2">
+      <form onSubmit={sendMessage} className="mt-4 flex gap-2 relative">
+        <button
+          type="button"
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          className="bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#3a3a3a] text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition"
+        >
+          <FiSmile size={20} />
+        </button>
+        
         <input
           type="text"
           value={newMessage}
@@ -162,12 +174,24 @@ const ChatRoom: React.FC = () => {
           placeholder="Введите сообщение..."
           className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
         />
+        
         <button
           type="submit"
           className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition"
         >
           <FiSend size={20} />
         </button>
+        
+        {showEmojiPicker && (
+          <div className="absolute bottom-full right-0 mb-2 z-50">
+            <EmojiPicker
+              onEmojiClick={(emoji) => {
+                setNewMessage(prev => prev + emoji.emoji);
+                setShowEmojiPicker(false);
+              }}
+            />
+          </div>
+        )}
       </form>
     </div>
   );

@@ -166,3 +166,49 @@ async def get_or_create_chat_with_student(
         await db.refresh(chat)
     
     return {"chat_id": chat.id}
+
+@router.get("/assignment/{assignment_id}")
+async def get_or_create_chat_by_assignment(
+    assignment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Получить или создать чат, привязанный к заданию"""
+    
+    from app.models.assignment import Assignment
+    
+    result = await db.execute(select(Assignment).where(Assignment.id == assignment_id))
+    assignment = result.scalar_one_or_none()
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+    
+    if current_user.role == "teacher":
+        student_id = assignment.student_id
+        teacher_id = current_user.id
+    else:
+        student_id = current_user.id
+        teacher_id = assignment.teacher_id
+    
+    if not student_id:
+        raise HTTPException(status_code=400, detail="Assignment not assigned to specific student")
+    
+    result = await db.execute(
+        select(Chat).where(
+            (Chat.teacher_id == teacher_id) &
+            (Chat.student_id == student_id) &
+            (Chat.assignment_id == assignment_id)
+        )
+    )
+    chat = result.scalar_one_or_none()
+    
+    if not chat:
+        chat = Chat(
+            teacher_id=teacher_id,
+            student_id=student_id,
+            assignment_id=assignment_id
+        )
+        db.add(chat)
+        await db.commit()
+        await db.refresh(chat)
+    
+    return {"chat_id": chat.id}

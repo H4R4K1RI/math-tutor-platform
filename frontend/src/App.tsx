@@ -46,6 +46,7 @@ function AppRoutes() {
       <Route path="/chats" element={<ProtectedRoute><Chats /></ProtectedRoute>} />
       <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
       <Route path="/chat/student/:studentId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+      <Route path="/chat/assignment/:assignmentId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
     </Routes>
   );
 }
