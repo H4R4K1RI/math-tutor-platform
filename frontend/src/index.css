@@ -325,4 +325,12 @@ input:-webkit-autofill:active {
   transition-timing-function: ease;
 }
 
+/* Явно задаём цвет текста для кнопок в светлой теме */
+button.bg-\[\#2e7d5e\] {
+  color: white !important;
+}
 
+button.bg-\[\#2e7d5e\]:hover {
+  background-color: #1e5a44 !important;
+  color: white !important;
+}
