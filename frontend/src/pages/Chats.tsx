@@ -67,7 +67,7 @@ const Chats: React.FC = () => {
     if (!selectedStudent) return;
     setCreating(true);
     try {
-      const response = await apiClient.post('/chats', { student_id: selectedStudent });
+      const response = await apiClient.post('/chats/', { student_id: Number(selectedStudent) });
       window.location.href = `/chat/${response.data.chat_id}`;
     } catch (error) {
       console.error('Error creating chat:', error);

@@ -108,6 +108,9 @@ async def create_chat(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+
+    print(f"Received student_id: {student_id}, type: {type(student_id)}")
+    print(f"Current user: {current_user.id}, role: {current_user.role}")
     """Создать новый чат (только для учителя)"""
     
     if current_user.role != "teacher":
