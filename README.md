@@ -41,31 +41,34 @@
 
 ### Backend
 
-```bash```
-```cd backend```
-```python -m venv venv```
-```source venv/bin/activate  # Windows: venv\Scripts\activate```
-```pip install -r requirements.txt```
-```uvicorn app.main:app --reload```
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
 ### Frontend
 
-```bash```
-```cd frontend```
-```npm install```
-```npm run dev```
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
 ### Переменные окружения
 
 Создай файл .env в папке backend:
 
-```env```
-```DATABASE_URL=postgresql+asyncpg://user:pass@localhost/db```
-```SECRET_KEY=your_secret_key```
-```ALGORITHM=HS256```
-```ACCESS_TOKEN_EXPIRE_MINUTES=30```
-```REFRESH_TOKEN_EXPIRE_DAYS=7```
-```FRONTEND_URL=http://localhost:5173```
+```env
+DATABASE_URL=postgresql+asyncpg://user:pass@localhost/db
+SECRET_KEY=your_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+FRONTEND_URL=http://localhost:5173
+```
 
 ### 🐳 Docker
 
