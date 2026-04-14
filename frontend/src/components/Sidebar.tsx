@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiBook, FiCheckCircle, FiLogOut, FiSun, FiMoon, FiMessageCircle } from 'react-icons/fi';
+import { FiHome, FiBook, FiCheckCircle, FiLogOut, FiSun, FiMoon, FiMessageCircle, FiX } from 'react-icons/fi';
 
 interface SidebarProps {
   darkMode: boolean;
@@ -31,14 +31,17 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700">
-          <Link
-  to="/"
-  onClick={onClose}
-  className="text-xl font-bold block text-center text-[#2e7d5e] dark:text-[#2e7d5e]"
->
-  📐 Math Tutor
-</Link>
+        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+          <Link to="/" onClick={onClose} className="text-xl font-bold text-center text-[#2e7d5e] dark:text-[#2e7d5e]">
+            📐 Math Tutor
+          </Link>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition"
+            aria-label="Закрыть меню"
+          >
+            <FiX size={24} />
+          </button>
         </div>
 
         <nav className="flex-1 py-6">
@@ -75,7 +78,11 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
                   </>
                 )}
 
-                <Link to="/chats" onClick={onClose} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg">
+                <Link
+                  to="/chats"
+                  onClick={onClose}
+                  className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg"
+                >
                   <FiMessageCircle size={20} />
                   <span>Чаты</span>
                 </Link>
