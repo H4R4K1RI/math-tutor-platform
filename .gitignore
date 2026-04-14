@@ -19,3 +19,7 @@ backend/uploads/
 *.tsbuildinfo
 vite.config.d.ts
 vite.config.js
+*.save.*
+*.tsx.save.*
+setSidebarOpen*
+{
