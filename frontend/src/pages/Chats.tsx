@@ -51,23 +51,35 @@ const Chats: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchChats();
+  fetchChats();
+  if (isTeacher) {
     fetchStudents();
-    
-    socket.on('new_message', () => {
-      fetchChats();
-    });
-    
-    return () => {
-      socket.off('new_message');
-    };
-  }, []);
+  }
+
+  socket.on('new_message', () => {
+    fetchChats();
+  });
+  
+  socket.on('chat_deleted', () => {
+    fetchChats();
+  });
+  
+  socket.on('chat_cleared', () => {
+    fetchChats();
+  });
+
+  return () => {
+    socket.off('new_message');
+    socket.off('chat_deleted');
+    socket.off('chat_cleared');
+  };
+}, [isTeacher]);
 
   const createChat = async () => {
     if (!selectedStudent) return;
     setCreating(true);
     try {
-      const response = await apiClient.post('/chats/', { student_id: Number(selectedStudent) });
+      const response = await apiClient.post('/chats/', { student_id: Number(selectedStudent), assignment_id: null });
       window.location.href = `/chat/${response.data.chat_id}`;
     } catch (error) {
       console.error('Error creating chat:', error);

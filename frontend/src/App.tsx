@@ -37,8 +37,6 @@ const TeacherRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 function AppRoutes() {
   const { user, isLoading } = useAuth();
-  const location = useLocation();
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   if (isLoading) {
     return <div className="text-center py-20">Загрузка приложения...</div>;
@@ -61,7 +59,9 @@ function AppRoutes() {
   );
 }
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat/');
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
@@ -78,23 +78,31 @@ function App() {
   }, [darkMode]);
 
   return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      {!isChatPage && (
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="fixed top-4 left-4 z-50 p-2 rounded-lg border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white bg-white dark:bg-[#0d1b12] transition-all duration-200 shadow-md"
+          aria-label="Toggle sidebar"
+        >
+          <FiMenu size={24} />
+        </button>
+      )}
+
+      <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      <main className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} pt-16 lg:pt-0`}>
+        <AppRoutes />
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="fixed top-4 left-4 z-50 p-2 rounded-lg border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white bg-white dark:bg-[#0d1b12] transition-all duration-200 shadow-md"
-            aria-label="Toggle sidebar"
-          >
-            <FiMenu size={24} />
-          </button>
-
-          <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-          <main className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
-            <AppRoutes />
-          </main>
-        </div>
+        <AppContent />
       </AuthProvider>
     </BrowserRouter>
   );

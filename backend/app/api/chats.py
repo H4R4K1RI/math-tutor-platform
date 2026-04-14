@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, desc, update
+from sqlalchemy import select, func, desc, update, delete
 from typing import List, Optional
 
 from app.db.database import get_db
 from app.models.user import User
 from app.models.assignment import Assignment
 from app.models.chat import Chat, Message
-from app.schemas.chat import ChatResponse, MessageResponse
+from app.schemas.chat import ChatResponse, MessageResponse, ChatCreate
 from app.core.dependencies import get_current_user
+from app.socket_manager import sio
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
@@ -103,40 +104,37 @@ async def get_messages(
 
 @router.post("/")
 async def create_chat(
-    student_id: int,
-    assignment_id: Optional[int] = None,
+    chat_data: ChatCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-
-    print(f"Received student_id: {student_id}, type: {type(student_id)}")
+    print(f"Received student_id: {chat_data.student_id}, type: {type(chat_data.student_id)}")
     print(f"Current user: {current_user.id}, role: {current_user.role}")
-    """Создать новый чат (только для учителя)"""
     
     if current_user.role != "teacher":
         raise HTTPException(status_code=403, detail="Only teachers can create chats")
-    
+
     result = await db.execute(
         select(Chat).where(
             (Chat.teacher_id == current_user.id) &
-            (Chat.student_id == student_id)
+            (Chat.student_id == chat_data.student_id)
         )
     )
     existing_chat = result.scalar_one_or_none()
-    
+
     if existing_chat:
         return {"chat_id": existing_chat.id}
-    
+
     new_chat = Chat(
         teacher_id=current_user.id,
-        student_id=student_id,
-        assignment_id=assignment_id
+        student_id=chat_data.student_id,
+        assignment_id=chat_data.assignment_id
     )
-    
+
     db.add(new_chat)
     await db.commit()
     await db.refresh(new_chat)
-    
+
     return {"chat_id": new_chat.id}
 
 @router.get("/student/{student_id}")
@@ -215,3 +213,58 @@ async def get_or_create_chat_by_assignment(
         await db.refresh(chat)
     
     return {"chat_id": chat.id}
+
+@router.delete("/{chat_id}/messages")
+async def clear_messages(
+    chat_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Очистить историю сообщений в чате"""
+    
+    # Проверяем доступ к чату
+    result = await db.execute(select(Chat).where(Chat.id == chat_id))
+    chat = result.scalar_one_or_none()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    if current_user.id not in (chat.teacher_id, chat.student_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Удаляем все сообщения
+    await db.execute(delete(Message).where(Message.chat_id == chat_id))
+    await db.commit()
+    
+    # Обновляем updated_at
+    await db.execute(update(Chat).where(Chat.id == chat_id).values(updated_at=func.now()))
+    await db.commit()
+    
+    # Оповещаем участников через WebSocket
+    await sio.emit('chat_cleared', {'chat_id': chat_id}, room=f"chat_{chat_id}")
+    
+    return {"message": "Chat history cleared"}
+
+@router.delete("/{chat_id}")
+async def delete_chat(
+    chat_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Полностью удалить чат"""
+    
+    result = await db.execute(select(Chat).where(Chat.id == chat_id))
+    chat = result.scalar_one_or_none()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    if current_user.id not in (chat.teacher_id, chat.student_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Удаляем чат (сообщения удалятся каскадно)
+    await db.delete(chat)
+    await db.commit()
+    
+    # Оповещаем участников
+    await sio.emit('chat_deleted', {'chat_id': chat_id}, room=f"chat_{chat_id}")
+    
+    return {"message": "Chat deleted"}
