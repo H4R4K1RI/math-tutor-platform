@@ -15,7 +15,7 @@
 - PostgreSQL, SQLAlchemy (async)
 - JWT, HttpOnly cookies
 - WebSocket (Socket.IO)
-- Docker, Nginx
+- Docker(планируется), Nginx
 
 ### Frontend
 - React 18, TypeScript
@@ -59,7 +59,7 @@ npm run dev
 
 ### Переменные окружения
 
-Создай файл .env в папке backend:
+Создай файл ```.env``` в папке ```backend```:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://user:pass@localhost/db
@@ -70,7 +70,7 @@ REFRESH_TOKEN_EXPIRE_DAYS=7
 FRONTEND_URL=http://localhost:5173
 ```
 
-### 🐳 Docker
+### 🐳 Docker(впланах)
 
 ```bash
 docker-compose up -d
