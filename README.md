@@ -50,7 +50,7 @@ uvicorn app.main:app --reload```
 
 ### Frontend
 
-```bash 
+```bash
 cd frontend
 npm install
 npm run dev```
