@@ -164,8 +164,7 @@ const ReviewSubmissions: React.FC = () => {
                         const feedback = (document.getElementById(`feedback-${sub.id}`) as HTMLTextAreaElement).value;
                         updateStatus(sub.id, 'approved', feedback);
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition"
-                    >
+                      className="border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent">
                       ✅ Зачесть
                     </button>
                     <button
@@ -173,8 +172,8 @@ const ReviewSubmissions: React.FC = () => {
                         const feedback = (document.getElementById(`feedback-${sub.id}`) as HTMLTextAreaElement).value;
                         updateStatus(sub.id, 'rejected', feedback);
                       }}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
-                    >
+                      className="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent"
+>
                       ❌ На доработку
                     </button>
                   </div>
