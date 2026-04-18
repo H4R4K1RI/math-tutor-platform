@@ -26,7 +26,8 @@ const AssignmentDetail: React.FC = () => {
         apiClient.get('/submissions')
       ]);
       setAssignment(assignmentRes.data);
-      const existing = submissionsRes.data.find((s: Submission) => s.assignment_id === Number(id));
+      const submissionsData = submissionsRes.data.items || submissionsRes.data;
+const existing = submissionsData.find((s: Submission) => s.assignment_id === Number(id));
       if (existing) {
         setSubmission(existing);
         setContent(existing.content || '');
@@ -79,7 +80,7 @@ const AssignmentDetail: React.FC = () => {
       
       const submitData = {
         assignment_id: Number(id),
-        content: content,
+        content: content || null,
         files: filesValue
       };
       

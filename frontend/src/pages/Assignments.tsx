@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../api/client';
 import { Assignment, User } from '../types';
 import toast from 'react-hot-toast';
+import Pagination from '../components/Pagination';
+import { socket } from '../socket';
 
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -17,16 +19,16 @@ const Assignments: React.FC = () => {
     student_id: null as number | null,
   });
 
-  useEffect(() => {
-    fetchAssignments();
-    fetchStudents();
-  }, []);
+  // Пагинация
+  const [skip, setSkip] = useState(0);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const fetchAssignments = async () => {
     try {
-      const response = await apiClient.get('/assignments');
-      console.log('Assignments:', response.data);
-      setAssignments(response.data);
+      const response = await apiClient.get('/assignments', { params: { skip, limit } });
+      setAssignments(response.data.items || []);
+      setTotal(response.data.total || 0);
     } catch (error) {
       console.error('Error fetching assignments:', error);
     }
@@ -40,6 +42,26 @@ const Assignments: React.FC = () => {
       console.error('Error fetching students:', error);
     }
   };
+
+  useEffect(() => {
+    fetchAssignments();
+    fetchStudents();
+  }, [skip]);
+
+  // WebSocket обновления
+  useEffect(() => {
+    const handleAssignmentUpdate = () => {
+      fetchAssignments();
+    };
+    
+    socket.on('assignment_updated', handleAssignmentUpdate);
+    socket.on('assignment_deleted', handleAssignmentUpdate);
+    
+    return () => {
+      socket.off('assignment_updated', handleAssignmentUpdate);
+      socket.off('assignment_deleted', handleAssignmentUpdate);
+    };
+  }, [skip]);
 
   const handleMultipleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -141,7 +163,7 @@ const Assignments: React.FC = () => {
         <h1 className="text-2xl font-bold dark:text-white">Управление заданиями</h1>
         <button
           onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
-          className="border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold px-4 py-2 rounded-lg transition-all duration-200"
+          className="border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent"
         >
           + Создать задание
         </button>
@@ -282,6 +304,13 @@ const Assignments: React.FC = () => {
           ))
         )}
       </div>
+
+      <Pagination
+        total={total}
+        limit={limit}
+        skip={skip}
+        onPageChange={(newSkip) => setSkip(newSkip)}
+      />
     </div>
   );
 };

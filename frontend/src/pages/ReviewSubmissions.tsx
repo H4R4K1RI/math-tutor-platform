@@ -4,21 +4,26 @@ import apiClient from '../api/client';
 import { Submission, Assignment } from '../types';
 import { socket } from '../socket';
 import { FiMessageCircle } from 'react-icons/fi';
+import Pagination from '../components/Pagination';
 
 const ReviewSubmissions: React.FC = () => {
   const navigate = useNavigate();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [skip, setSkip] = useState(0);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const fetchData = async () => {
     try {
       const [submissionsRes, assignmentsRes] = await Promise.all([
-        apiClient.get('/submissions'),
+        apiClient.get('/submissions', { params: { skip, limit } }),
         apiClient.get('/assignments')
       ]);
-      setSubmissions(submissionsRes.data);
-      setAssignments(assignmentsRes.data);
+      setSubmissions(submissionsRes.data.items || []);
+      setTotal(submissionsRes.data.total || 0);
+      setAssignments(assignmentsRes.data.items || assignmentsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -28,7 +33,7 @@ const ReviewSubmissions: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [skip]);
 
   useEffect(() => {
     const handleUpdate = () => fetchData();
@@ -38,7 +43,7 @@ const ReviewSubmissions: React.FC = () => {
       socket.off('submission_updated', handleUpdate);
       socket.off('assignment_updated', handleUpdate);
     };
-  }, []);
+  }, [skip]);
 
   const updateStatus = async (id: number, status: string, feedback: string) => {
     try {
@@ -129,15 +134,13 @@ const ReviewSubmissions: React.FC = () => {
                 </div>
 
                 <div className="text-right ml-4">
-                  <p
-                    className={`text-sm font-semibold ${
-                      sub.status === 'approved'
-                        ? 'text-green-600 dark:text-green-400'
-                        : sub.status === 'rejected'
-                        ? 'text-red-600 dark:text-red-400'
-                        : 'text-yellow-600 dark:text-yellow-400'
-                    }`}
-                  >
+                  <p className={`text-sm font-semibold ${
+                    sub.status === 'approved'
+                      ? 'text-green-600 dark:text-green-400'
+                      : sub.status === 'rejected'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-yellow-600 dark:text-yellow-400'
+                  }`}>
                     {sub.status === 'approved'
                       ? '✅ Зачтено'
                       : sub.status === 'rejected'
@@ -164,7 +167,8 @@ const ReviewSubmissions: React.FC = () => {
                         const feedback = (document.getElementById(`feedback-${sub.id}`) as HTMLTextAreaElement).value;
                         updateStatus(sub.id, 'approved', feedback);
                       }}
-                      className="border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent">
+                      className="border border-green-600 text-green-600 hover:bg-green-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent"
+                    >
                       ✅ Зачесть
                     </button>
                     <button
@@ -173,7 +177,7 @@ const ReviewSubmissions: React.FC = () => {
                         updateStatus(sub.id, 'rejected', feedback);
                       }}
                       className="border border-red-600 text-red-600 hover:bg-red-600 hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent"
->
+                    >
                       ❌ На доработку
                     </button>
                   </div>
@@ -183,6 +187,13 @@ const ReviewSubmissions: React.FC = () => {
           ))}
         </div>
       )}
+
+      <Pagination
+        total={total}
+        limit={limit}
+        skip={skip}
+        onPageChange={(newSkip) => setSkip(newSkip)}
+      />
     </div>
   );
 };
