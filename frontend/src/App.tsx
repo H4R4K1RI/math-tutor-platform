@@ -3,7 +3,11 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Sidebar from './components/Sidebar';
 import { FiMenu } from 'react-icons/fi';
-
+import Privacy from './pages/Privacy';
+import Contacts from './pages/Contacts';
+import Header from './components/Header';
+import Footer from './components/Footer';
+        
 // Ленивая загрузка страниц
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
@@ -55,12 +59,15 @@ function AppRoutes() {
       <Route path="/chat/student/:studentId" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
       <Route path="/chat/assignment/:assignmentId" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/contacts" element={<Contacts />} />
     </Routes>
   );
 }
 
 function AppContent() {
   const location = useLocation();
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isChatPage = location.pathname.startsWith('/chat/');
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
@@ -78,11 +85,11 @@ function AppContent() {
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
       {!isChatPage && (
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="fixed top-4 left-4 z-50 p-2 rounded-lg border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white bg-white dark:bg-[#0d1b12] transition-all duration-200 shadow-md"
+          className="fixed top-16 left-4 z-50 p-2 rounded-lg border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white bg-white dark:bg-[#0d1b12] transition-all duration-200 shadow-md"
           aria-label="Toggle sidebar"
         >
           <FiMenu size={24} />
@@ -91,9 +98,12 @@ function AppContent() {
 
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} pt-16 lg:pt-0`}>
+      <Header />
+
+      <main className={`transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-0'} ${isAuthPage ? '' : 'pt-16 lg:pt-0'}`}>
         <AppRoutes />
       </main>
+      <Footer />
     </div>
   );
 }

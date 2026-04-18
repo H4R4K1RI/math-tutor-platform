@@ -10,6 +10,7 @@ const Register: React.FC = () => {
   const [error, setError] = useState('');
   const { register, user } = useAuth();
   const navigate = useNavigate();
+  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -23,6 +24,12 @@ const Register: React.FC = () => {
       setError('Пароли не совпадают');
       return;
     }
+
+    if (!agreed) {
+  setError('Необходимо согласие на обработку персональных данных');
+  return;
+}  
+
     try {
       await register(email, fullName, password);
       navigate('/dashboard');
@@ -87,7 +94,23 @@ const Register: React.FC = () => {
               required
             />
           </div>
-
+          <div className="flex items-start gap-2">
+  <input
+    type="checkbox"
+    id="consent"
+    checked={agreed}
+    onChange={(e) => setAgreed(e.target.checked)}
+    className="mt-1"
+    required
+  />
+  <label htmlFor="consent" className="text-sm text-gray-600 dark:text-gray-400">
+    Я принимаю условия{' '}
+    <Link to="/privacy" target="_blank" className="text-[#2e7d5e] hover:underline">
+      Политики конфиденциальности
+    </Link>{' '}
+    и даю согласие на обработку персональных данных
+  </label>
+</div>
           <button
             type="submit"
             className="w-full border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 bg-transparent"
