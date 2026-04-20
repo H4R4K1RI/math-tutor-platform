@@ -3,8 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { socket } from '../socket';
 import { useAuth } from '../context/AuthContext';
-import { FiSend, FiSmile, FiArrowLeft } from 'react-icons/fi';
+import { FiSend, FiSmile, FiArrowLeft, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import AnimatedPage from '../components/AnimatedPage';
 
 const EmojiPicker = lazy(() => import('emoji-picker-react'));
 
@@ -27,9 +28,10 @@ const ChatRoom: React.FC = () => {
   const [otherUserName, setOtherUserName] = useState('');
   const [chatId, setChatId] = useState<number | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Инициализация чата
   useEffect(() => {
     const initChat = async () => {
       try {
@@ -45,15 +47,13 @@ const ChatRoom: React.FC = () => {
           navigate(`/chat/${newChatId}`, { replace: true });
           return;
         }
-        if (id) {
-          setChatId(parseInt(id));
-        }
+        if (id) setChatId(parseInt(id));
       } catch (error) {
         console.error('Error initializing chat:', error);
+        toast.error('Ошибка при загрузке чата');
         navigate('/chats');
       }
     };
-    
     initChat();
   }, [id, studentId, assignmentId, navigate]);
 
@@ -62,9 +62,12 @@ const ChatRoom: React.FC = () => {
     try {
       const response = await apiClient.get(`/chats/${chatId}/messages`);
       setMessages(response.data);
-      socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+      if (socket.connected) {
+        socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+      }
     } catch (error) {
       console.error('Error fetching messages:', error);
+      toast.error('Ошибка при загрузке сообщений');
       navigate('/chats');
     } finally {
       setLoading(false);
@@ -76,9 +79,7 @@ const ChatRoom: React.FC = () => {
     try {
       const response = await apiClient.get('/chats');
       const chat = response.data.find((c: any) => c.id === chatId);
-      if (chat) {
-        setOtherUserName(chat.other_user_name);
-      }
+      if (chat) setOtherUserName(chat.other_user_name);
     } catch (error) {
       console.error('Error fetching chat info:', error);
     }
@@ -89,38 +90,69 @@ const ChatRoom: React.FC = () => {
       fetchMessages();
       fetchChatInfo();
       
-      socket.emit('join_chat', { chat_id: chatId });
-      
-      socket.on('new_message', (data: any) => {
+      if (socket.connected) {
+        socket.emit('join_chat', { chat_id: chatId });
+      }
+
+      const handleNewMessage = (data: any) => {
         if (data.chat_id === chatId) {
           setMessages(prev => [...prev, data]);
-          if (data.sender_id !== user?.id) {
+          if (data.sender_id !== user?.id && socket.connected) {
             socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
           }
         }
-      });
-      
-      socket.on('chat_cleared', (data: any) => {
+      };
+
+      const handleChatCleared = (data: any) => {
         if (data.chat_id === chatId) {
           setMessages([]);
           toast.success('История чата очищена');
         }
-      });
-      
-      socket.on('chat_deleted', (data: any) => {
+      };
+
+      const handleChatDeleted = (data: any) => {
         if (data.chat_id === chatId) {
           toast.success('Чат удалён');
           navigate('/chats');
         }
-      });
-      
+      };
+
+      const handleMessageEdited = (data: any) => {
+        if (data.chat_id === chatId) {
+          setMessages(prev => prev.map(msg => 
+            msg.id === data.message_id ? { ...msg, message: data.new_message } : msg
+          ));
+        }
+      };
+
+      const handleMessageDeleted = (data: any) => {
+        if (data.chat_id === chatId) {
+          setMessages(prev => prev.filter(msg => msg.id !== data.message_id));
+        }
+      };
+
+      const handleConnectError = (error: any) => {
+        console.error('Socket connection error:', error);
+        toast.error('Ошибка подключения к чату');
+      };
+
+      socket.on('new_message', handleNewMessage);
+      socket.on('chat_cleared', handleChatCleared);
+      socket.on('chat_deleted', handleChatDeleted);
+      socket.on('message_edited', handleMessageEdited);
+      socket.on('message_deleted', handleMessageDeleted);
+      socket.on('connect_error', handleConnectError);
+
       return () => {
-        socket.off('new_message');
-        socket.off('chat_cleared');
-        socket.off('chat_deleted');
+        socket.off('new_message', handleNewMessage);
+        socket.off('chat_cleared', handleChatCleared);
+        socket.off('chat_deleted', handleChatDeleted);
+        socket.off('message_edited', handleMessageEdited);
+        socket.off('message_deleted', handleMessageDeleted);
+        socket.off('connect_error', handleConnectError);
       };
     }
-  }, [chatId]);
+  }, [chatId, user?.id, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -130,144 +162,235 @@ const ChatRoom: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !chatId) return;
     
-    socket.emit('send_message', {
-      chat_id: chatId,
-      sender_id: user?.id,
-      message: newMessage.trim()
-    });
+    if (!socket.connected) {
+      toast.error('Нет соединения с сервером');
+      return;
+    }
     
+    socket.emit('send_message', { 
+      chat_id: chatId, 
+      sender_id: user?.id, 
+      message: newMessage.trim() 
+    });
     setNewMessage('');
   };
 
   const handleClearHistory = async () => {
-    if (!chatId) return;
-    if (!confirm('Очистить всю историю сообщений? Это действие нельзя отменить.')) return;
-    
+    if (!chatId || !confirm('Очистить всю историю сообщений? Это действие нельзя отменить.')) return;
     try {
       await apiClient.delete(`/chats/${chatId}/messages`);
       setMessages([]);
       toast.success('История очищена');
     } catch (error) {
-      console.error('Error clearing history:', error);
+      console.error(error);
       toast.error('Ошибка при очистке');
     }
   };
 
   const handleDeleteChat = async () => {
-    if (!chatId) return;
-    if (!confirm('Удалить чат навсегда? Это действие нельзя отменить.')) return;
-    
+    if (!chatId || !confirm('Удалить чат навсегда? Это действие нельзя отменить.')) return;
     try {
       await apiClient.delete(`/chats/${chatId}`);
       navigate('/chats');
       toast.success('Чат удалён');
     } catch (error) {
-      console.error('Error deleting chat:', error);
+      console.error(error);
       toast.error('Ошибка при удалении');
     }
   };
 
-  if (loading) return <div className="text-center py-20">Загрузка...</div>;
+  const handleEditMessage = async (messageId: number, newText: string) => {
+    if (!newText.trim()) return;
+    try {
+      await apiClient.put(`/chats/messages/${messageId}`, null, { 
+        params: { new_message: newText.trim() } 
+      });
+      setEditingMessageId(null);
+      setEditText('');
+      toast.success('Сообщение отредактировано');
+    } catch (error) {
+      console.error(error);
+      toast.error('Ошибка при редактировании');
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: number) => {
+    if (!confirm('Удалить сообщение?')) return;
+    try {
+      await apiClient.delete(`/chats/messages/${messageId}`);
+      toast.success('Сообщение удалено');
+    } catch (error) {
+      console.error(error);
+      toast.error('Ошибка при удалении');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[calc(100vh-120px)]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-white">Загрузка чата...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)]">
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-t-lg shadow p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate('/chats')}
-            className="p-1 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-            aria-label="Назад к чатам"
-          >
-            <FiArrowLeft size={24} className="text-gray-700 dark:text-gray-300" />
-          </button>
-          <h2 className="text-xl font-semibold dark:text-white">{otherUserName || 'Чат'}</h2>
-        </div>
-        
-        <div className="flex gap-3 mt-3">
-          <button
-            onClick={handleClearHistory}
-            className="text-sm text-gray-500 hover:text-red-500 transition"
-            title="Очистить историю"
-          >
-            🗑️ Очистить
-          </button>
-          <button
-            onClick={handleDeleteChat}
-            className="text-sm text-gray-500 hover:text-red-700 transition"
-            title="Удалить чат"
-          >
-            ❌ Удалить чат
-          </button>
-        </div>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-[#121212] rounded-b-lg">
-        {messages.length === 0 ? (
-          <div className="text-center text-gray-500 dark:text-gray-400 py-10">
-            Напишите первое сообщение
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+    <AnimatedPage>
+      <div className="flex flex-col h-[calc(100vh-120px)]">
+        {/* Header */}
+        <div className="bg-dark-card rounded-t-lg shadow p-4 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate('/chats')} 
+              className="p-1 rounded-lg hover:bg-white/10 transition" 
+              aria-label="Назад к чатам"
             >
-              <div
-                className={`max-w-[70%] rounded-lg px-4 py-2 shadow ${
-                  msg.sender_id === user?.id
-                    ? '!bg-green-100 dark:!bg-green-800 text-gray-900 dark:text-white'
-                    : '!bg-gray-100 dark:!bg-gray-700 text-gray-900 dark:text-white'
-                }`}
-              >
-                <p className="break-words whitespace-pre-wrap">{msg.message}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-      
-      <form onSubmit={sendMessage} className="mt-4 flex gap-2 relative">
-        <button
-          type="button"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          className="bg-gray-200 dark:bg-[#2a2a2a] hover:bg-gray-300 dark:hover:bg-[#3a3a3a] text-gray-700 dark:text-gray-300 px-3 py-2 rounded-lg transition"
-        >
-          <FiSmile size={20} />
-        </button>
-        
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Введите сообщение..."
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
-        />
-        
-        <button
-          type="submit"
-          className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition"
-        >
-          <FiSend size={20} />
-        </button>
-        
-        {showEmojiPicker && (
-          <div className="absolute bottom-full right-0 mb-2 z-50">
-            <Suspense fallback={<div className="p-2 text-center">Загрузка...</div>}>
-              <EmojiPicker
-                onEmojiClick={(emoji) => {
-                  setNewMessage(prev => prev + emoji.emoji);
-                  setShowEmojiPicker(false);
-                }}
-              />
-            </Suspense>
+              <FiArrowLeft size={24} className="text-gray-300" />
+            </button>
+            <h2 className="text-xl font-semibold text-white">{otherUserName || 'Чат'}</h2>
           </div>
-        )}
-      </form>
-    </div>
+          <div className="flex gap-3 mt-3">
+            <button 
+              onClick={handleClearHistory} 
+              className="text-sm text-gray-400 hover:text-danger transition"
+            >
+              🗑️ Очистить
+            </button>
+            <button 
+              onClick={handleDeleteChat} 
+              className="text-sm text-gray-400 hover:text-danger transition"
+            >
+              ❌ Удалить чат
+            </button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-dark-bg rounded-b-lg">
+          {messages.length === 0 ? (
+            <div className="text-center text-gray-500 py-10">
+              Напишите первое сообщение
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div 
+                key={msg.id} 
+                className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[70%] rounded-lg px-4 py-2 shadow ${
+                  msg.sender_id === user?.id
+                    ? 'bg-accent text-white'
+                    : 'bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-200'
+                }`}>
+                  {editingMessageId === msg.id ? (
+                    <div className="flex flex-col gap-2">
+                      <input 
+                        type="text" 
+                        value={editText} 
+                        onChange={(e) => setEditText(e.target.value)} 
+                        className="w-full px-2 py-1 border rounded bg-gray-700 text-white" 
+                        autoFocus 
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <button 
+                          onClick={() => handleEditMessage(msg.id, editText)} 
+                          className="bg-green-700 hover:bg-green-600 text-white px-2 py-1 rounded text-sm"
+                        >
+                          💾 Сохранить
+                        </button>
+                        <button 
+                          onClick={() => setEditingMessageId(null)} 
+                          className="bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 rounded text-sm"
+                        >
+                          ✖ Отмена
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="break-words whitespace-pre-wrap">{msg.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        msg.sender_id === user?.id 
+                          ? 'text-white/70' 
+                          : 'text-gray-500 dark:text-gray-400'
+                      }`}>
+                        {new Date(msg.created_at).toLocaleTimeString([], { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                        })}
+                      </p>
+                      {msg.sender_id === user?.id && (
+                        <div className="flex gap-2 justify-end mt-1">
+                          <button 
+                            onClick={() => { 
+                              setEditingMessageId(msg.id); 
+                              setEditText(msg.message); 
+                            }} 
+                            className="text-gray-400 hover:text-accent transition"
+                            title="Редактировать"
+                          >
+                            <FiEdit2 size={14} />
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteMessage(msg.id)} 
+                            className="text-gray-400 hover:text-danger transition"
+                            title="Удалить"
+                          >
+                            <FiTrash2 size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input Form */}
+        <form onSubmit={sendMessage} className="mt-4 flex gap-2 relative">
+          <button 
+            type="button" 
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+            className="bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-2 rounded-lg transition"
+            title="Выбрать эмодзи"
+          >
+            <FiSmile size={20} />
+          </button>
+          <input 
+            type="text" 
+            value={newMessage} 
+            onChange={(e) => setNewMessage(e.target.value)} 
+            placeholder="Введите сообщение..." 
+            className="flex-1 px-4 py-2 border border-gray-700 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent bg-gray-800 text-white"
+          />
+          <button 
+            type="submit" 
+            className="bg-accent hover:bg-accent/80 text-white px-4 py-2 rounded-lg transition"
+            title="Отправить"
+          >
+            <FiSend size={20} />
+          </button>
+          
+          {showEmojiPicker && (
+            <div className="absolute bottom-full right-0 mb-2 z-50">
+              <Suspense fallback={<div className="p-2 text-center bg-gray-800 rounded">Загрузка...</div>}>
+                <EmojiPicker 
+                  onEmojiClick={(emoji) => { 
+                    setNewMessage(prev => prev + emoji.emoji); 
+                    setShowEmojiPicker(false); 
+                  }} 
+                />
+              </Suspense>
+            </div>
+          )}
+        </form>
+      </div>
+    </AnimatedPage>
   );
 };
 

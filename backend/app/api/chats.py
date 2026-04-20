@@ -268,3 +268,95 @@ async def delete_chat(
     await sio.emit('chat_deleted', {'chat_id': chat_id}, room=f"chat_{chat_id}")
     
     return {"message": "Chat deleted"}
+
+@router.put("/messages/{message_id}")
+async def edit_message(
+    message_id: int,
+    new_message: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Редактирование сообщения (только автор)"""
+    
+    result = await db.execute(select(Message).where(Message.id == message_id))
+    message = result.scalar_one_or_none()
+    
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    if message.sender_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only edit your own messages")
+    
+    message.message = new_message
+    await db.commit()
+    
+    # Оповещаем участников чата
+    await sio.emit('message_edited', {
+        'message_id': message_id,
+        'new_message': new_message,
+        'chat_id': message.chat_id
+    }, room=f"chat_{message.chat_id}")
+    
+    return {"message": "Message updated"}
+
+@router.delete("/messages/{message_id}")
+async def delete_message(
+    message_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Удаление сообщения (автор или учитель)"""
+    
+    result = await db.execute(select(Message).where(Message.id == message_id))
+    message = result.scalar_one_or_none()
+    
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    # Проверяем, кто может удалить
+    chat_result = await db.execute(select(Chat).where(Chat.id == message.chat_id))
+    chat = chat_result.scalar_one_or_none()
+    
+    if message.sender_id != current_user.id and current_user.role != "teacher":
+        raise HTTPException(status_code=403, detail="You don't have permission to delete this message")
+    
+    await db.delete(message)
+    await db.commit()
+    
+    # Оповещаем участников чата
+    await sio.emit('message_deleted', {
+        'message_id': message_id,
+        'chat_id': message.chat_id
+    }, room=f"chat_{message.chat_id}")
+    
+    return {"message": "Message deleted"}
+
+@router.get("/{chat_id}/search")
+async def search_messages(
+    chat_id: int,
+    q: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Поиск сообщений в чате по тексту"""
+    
+    # Проверяем доступ к чату
+    result = await db.execute(select(Chat).where(Chat.id == chat_id))
+    chat = result.scalar_one_or_none()
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+    
+    if current_user.id not in (chat.teacher_id, chat.student_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Поиск сообщений
+    result = await db.execute(
+        select(Message)
+        .where(Message.chat_id == chat_id)
+        .where(Message.message.ilike(f"%{q}%"))
+        .order_by(Message.created_at)
+        .limit(50)
+    )
+    messages = result.scalars().all()
+    
+    return messages

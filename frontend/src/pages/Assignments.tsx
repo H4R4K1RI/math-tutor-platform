@@ -153,6 +153,14 @@ const Assignments: React.FC = () => {
     }
     setAttachmentUrls([]);
     setShowForm(true);
+    
+    // Прокрутка к форме редактирования
+    setTimeout(() => {
+      const formElement = document.getElementById('assignment-form');
+      if (formElement) {
+        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
@@ -170,7 +178,7 @@ const Assignments: React.FC = () => {
       </div>
 
       {showForm && (
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow p-6 mb-6">
+        <div id="assignment-form" className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 dark:text-white">{editingId ? 'Редактировать задание' : 'Создать задание'}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

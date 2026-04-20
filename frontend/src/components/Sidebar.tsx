@@ -22,67 +22,41 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={onClose} />
-      )}
+      {isOpen && <div className="fixed inset-0 bg-black/70 z-40 lg:hidden" onClick={onClose} />}
 
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white dark:bg-[#0d1b12] text-gray-800 dark:text-gray-200 shadow-xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-          <Link to="/" onClick={onClose} className="text-xl font-bold text-center text-[#2e7d5e] dark:text-[#2e7d5e]">
-            📐 Math Tutor
+      <aside className={`fixed top-0 left-0 h-full w-72 bg-dark-card shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 border-b border-white/10 flex justify-between items-center">
+          <Link to="/" onClick={onClose} className="text-2xl font-bold text-white">
+            Math<span className="text-accent">Tutor</span>
           </Link>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition"
-            aria-label="Закрыть меню"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-white transition">
             <FiX size={24} />
           </button>
         </div>
 
-        <nav className="flex-1 py-6">
-          <div className="space-y-1">
+        <nav className="flex-1 py-8">
+          <div className="space-y-2 px-4">
             {user && (
               <>
-                <Link
-                  to="/dashboard"
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg"
-                >
+                <Link to="/dashboard" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition">
                   <FiHome size={20} />
                   <span>Дашборд</span>
                 </Link>
 
                 {isTeacher && (
                   <>
-                    <Link
-                      to="/assignments"
-                      onClick={onClose}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg"
-                    >
+                    <Link to="/assignments" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition">
                       <FiBook size={20} />
                       <span>Задания</span>
                     </Link>
-                    <Link
-                      to="/review"
-                      onClick={onClose}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg"
-                    >
+                    <Link to="/review" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition">
                       <FiCheckCircle size={20} />
                       <span>Проверка решений</span>
                     </Link>
                   </>
                 )}
 
-                <Link
-                  to="/chats"
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 dark:hover:bg-[#1e2a1a] transition rounded-lg"
-                >
+                <Link to="/chats" onClick={onClose} className="flex items-center gap-3 px-4 py-3 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition">
                   <FiMessageCircle size={20} />
                   <span>Чаты</span>
                 </Link>
@@ -91,20 +65,14 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           </div>
         </nav>
 
-        <div className="p-5 border-t border-gray-200 dark:border-gray-700 space-y-2">
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className="flex items-center gap-3 px-3 py-2 w-full hover:bg-gray-100 dark:hover:bg-[#1e2a1a] rounded-lg transition"
-          >
+        <div className="p-6 border-t border-white/10 space-y-4">
+          <button onClick={() => setDarkMode(!darkMode)} className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-gray-300 hover:bg-white/10 transition">
             {darkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
             <span>{darkMode ? 'Светлая тема' : 'Тёмная тема'}</span>
           </button>
 
           {user && (
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-3 py-2 w-full hover:bg-gray-100 dark:hover:bg-[#1e2a1a] rounded-lg transition"
-            >
+            <button onClick={handleLogout} className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-gray-300 hover:bg-danger/20 hover:text-danger transition">
               <FiLogOut size={20} />
               <span>Выйти</span>
             </button>

@@ -46,13 +46,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (email: string, full_name: string, password: string) => {
     await apiClient.post('/auth/register', { email, full_name, password });
-    await login(email, password);
   };
 
   const logout = async () => {
+  try {
     await apiClient.post('/auth/logout');
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    localStorage.removeItem('access_token');
     setUser(null);
-  };
+    // Принудительно перенаправляем на страницу входа
+    window.location.href = '/login';
+  }
+};
 
   const isTeacher = user?.role === 'teacher';
 

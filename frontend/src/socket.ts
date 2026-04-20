@@ -8,13 +8,7 @@ export const socket: Socket = io(SOCKET_URL, {
 });
 
 export const initSocket = () => {
-  socket.on('connect', () => {
-    console.log('Socket.IO connected');
-  });
-  
-  socket.on('disconnect', () => {
-    console.log('Socket.IO disconnected');
-  });
-  
+  socket.on('connect', () => console.log('Socket.IO connected'));
+  socket.on('disconnect', () => console.log('Socket.IO disconnected'));
   return socket;
 };

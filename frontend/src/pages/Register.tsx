@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AnimatedPage from '../components/AnimatedPage';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -8,14 +9,12 @@ const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { register, user } = useAuth();
   const navigate = useNavigate();
-  const [agreed, setAgreed] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
+    if (user) navigate('/dashboard');
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -24,109 +23,57 @@ const Register: React.FC = () => {
       setError('Пароли не совпадают');
       return;
     }
-
-    if (!agreed) {
-  setError('Необходимо согласие на обработку персональных данных');
-  return;
-}  
-
     try {
       await register(email, fullName, password);
-      navigate('/dashboard');
+      setSuccess(true);
     } catch (err) {
       setError('Ошибка регистрации. Попробуйте другой email.');
     }
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-[#0a0f0a] dark:to-[#0d1b12] overflow-hidden">
-      <div className="bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm rounded-2xl shadow-xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-bold text-center text-gray-800 dark:text-white mb-2">Регистрация</h2>
-        <p className="text-center text-gray-500 dark:text-gray-400 mb-6">Создайте новый аккаунт</p>
+    <AnimatedPage>
+      <div className="min-h-screen flex items-center justify-center bg-dark-bg">
+        <div className="bg-dark-card rounded-2xl shadow-2xl p-8 w-full max-w-md border border-white/10 fade-in">
+          <h2 className="text-3xl font-bold text-center text-white mb-2">Регистрация</h2>
+          <p className="text-center text-gray-400 mb-6">Создайте новый аккаунт</p>
 
-        {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 text-sm text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Полное имя</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Пароль</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Подтвердите пароль</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#2e7d5e] focus:border-transparent bg-white dark:bg-[#2a2a2a] text-gray-900 dark:text-white"
-              required
-            />
-          </div>
-          <div className="flex items-start gap-2">
-  <input
-    type="checkbox"
-    id="consent"
-    checked={agreed}
-    onChange={(e) => setAgreed(e.target.checked)}
-    className="mt-1"
-    required
-  />
-  <label htmlFor="consent" className="text-sm text-gray-600 dark:text-gray-400">
-    Я принимаю условия{' '}
-    <Link to="/privacy" target="_blank" className="text-[#2e7d5e] hover:underline">
-      Политики конфиденциальности
-    </Link>{' '}
-    и даю согласие на обработку персональных данных
-  </label>
-</div>
-          <button
-            type="submit"
-            className="w-full border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200 bg-transparent"
-          >
-            Зарегистрироваться
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          Уже есть аккаунт?{' '}
-          <Link to="/login" className="text-[#2e7d5e] dark:text-[#4a9b6e] hover:underline font-medium">
-            Войти
-          </Link>
-        </p>
+          {success ? (
+            <div className="mb-4 p-3 rounded-lg bg-green-900/50 text-green-400 text-sm text-center">
+              ✅ Регистрация успешна! На вашу почту отправлена ссылка для подтверждения.
+              <br />
+              <Link to="/login" className="text-accent hover:underline mt-2 inline-block">Перейти ко входу</Link>
+            </div>
+          ) : (
+            <>
+              {error && <div className="mb-4 p-3 rounded-lg bg-danger/20 text-danger text-sm text-center">{error}</div>}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Полное имя</label>
+                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="input" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Подтвердите пароль</label>
+                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input" required />
+                </div>
+                <button type="submit" className="btn-primary w-full">Зарегистрироваться</button>
+              </form>
+              <p className="text-center text-sm text-gray-400 mt-6">
+                Уже есть аккаунт? <Link to="/login" className="text-accent hover:underline">Войти</Link>
+              </p>
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </AnimatedPage>
   );
 };
 
