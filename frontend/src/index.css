@@ -297,3 +297,51 @@ body {
 .border-border {
   border-color: var(--border-color);
 }
+/* ========== МОБИЛЬНАЯ АДАПТАЦИЯ ========== */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Убираем лишние отступы на мобильных */
+  .p-6 {
+    padding: 1rem;
+  }
+  
+  /* Чат на мобильных занимает весь экран */
+  .chat-container {
+    height: calc(100vh - 60px);
+  }
+}
+
+/* Исправляем высоту для мобильных браузеров */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+  
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+/* ========== ДИНАМИЧЕСКАЯ ВЫСОТА ДЛЯ МОБИЛЬНЫХ ========== */
+@supports (height: 100dvh) {
+  .h-dvh {
+    height: 100dvh;
+  }
+}
+
+/* Для старых браузеров */
+@supports not (height: 100dvh) {
+  .h-dvh {
+    height: 100vh;
+  }
+}
+
+/* Дополнительная настройка для мобильных */
+@media (max-width: 768px) {
+  .chat-container {
+    height: 100dvh;
+  }
+}

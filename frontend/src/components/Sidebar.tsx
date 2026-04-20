@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { FiHome, FiBook, FiCheckCircle, FiLogOut, FiSun, FiMoon, FiMessageCircle, FiX, FiUser, FiMail } from 'react-icons/fi';
@@ -14,27 +14,26 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
   const { user, logout, isTeacher } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024 && isOpen) {
-        onClose();
-      }
+      setIsMobile(window.innerWidth < 1024);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [isOpen, onClose]);
+  }, []);
 
-  useEffect(() => {
-    if (window.innerWidth < 1024) {
+  const handleLinkClick = () => {
+    if (isMobile) {
       onClose();
     }
-  }, [location.pathname, onClose]);
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-    onClose();
+    handleLinkClick();
   };
 
   const isActive = (path: string) => {
@@ -51,40 +50,47 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
 
   return (
     <>
-      {isOpen && (
+      {/* Оверлей для мобильных */}
+      {isOpen && isMobile && (
         <div 
-          className="fixed inset-0 bg-black/70 z-40 lg:hidden transition-opacity duration-300" 
+          className="fixed inset-0 bg-black/70 z-40 transition-opacity duration-300" 
           onClick={onClose} 
         />
       )}
 
+      {/* Сайдбар */}
       <aside className={`
-        fixed top-0 left-0 h-full w-72 bg-card shadow-2xl z-50 
+        fixed top-0 left-0 h-full bg-card shadow-2xl z-50 
         transform transition-transform duration-300 ease-in-out
         flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        w-72
       `}>
+        {/* Логотип и кнопка закрытия */}
         <div className="p-6 border-b border-border flex justify-between items-center">
           <Link 
             to="/" 
-            onClick={onClose} 
+            onClick={handleLinkClick} 
             className="text-2xl font-bold text-primary hover:text-accent transition"
           >
             Math<span className="text-accent">Tutor</span>
           </Link>
+          {/* Кнопка закрытия - для всех устройств */}
           <button 
             onClick={onClose} 
-            className="lg:hidden text-secondary hover:text-primary transition p-1"
+            className="text-secondary hover:text-primary transition p-1"
             aria-label="Закрыть меню"
+            title="Свернуть меню"
           >
-            <FiX size={24} />
+            <FiX size={20} />
           </button>
         </div>
 
+        {/* Информация о пользователе */}
         {user && (
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center">
+              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
                 <FiUser size={20} className="text-white" />
               </div>
               <div className="flex-1 min-w-0">
@@ -107,29 +113,30 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           </div>
         )}
 
+        {/* Навигация */}
         <nav className="flex-1 py-6 overflow-y-auto">
           <div className="space-y-1 px-4">
             {user && (
               <>
-                <Link to="/dashboard" onClick={onClose} className={navLinkClass('/dashboard')}>
+                <Link to="/dashboard" onClick={handleLinkClick} className={navLinkClass('/dashboard')}>
                   <FiHome size={20} />
                   <span>Дашборд</span>
                 </Link>
 
                 {isTeacher && (
                   <>
-                    <Link to="/assignments" onClick={onClose} className={navLinkClass('/assignments')}>
+                    <Link to="/assignments" onClick={handleLinkClick} className={navLinkClass('/assignments')}>
                       <FiBook size={20} />
                       <span>Задания</span>
                     </Link>
-                    <Link to="/review" onClick={onClose} className={navLinkClass('/review')}>
+                    <Link to="/review" onClick={handleLinkClick} className={navLinkClass('/review')}>
                       <FiCheckCircle size={20} />
                       <span>Проверка решений</span>
                     </Link>
                   </>
                 )}
 
-                <Link to="/chats" onClick={onClose} className={navLinkClass('/chats')}>
+                <Link to="/chats" onClick={handleLinkClick} className={navLinkClass('/chats')}>
                   <FiMessageCircle size={20} />
                   <span>Чаты</span>
                 </Link>
@@ -138,6 +145,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           </div>
         </nav>
 
+        {/* Нижняя панель с кнопками */}
         <div className="p-6 border-t border-border space-y-3">
           <button 
             onClick={() => setDarkMode(!darkMode)} 
@@ -150,7 +158,7 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           {user && (
             <button 
               onClick={handleLogout} 
-              className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-secondary bg-hover hover:bg-danger/20 hover:text-danger transition-all duration-200"
+              className="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-secondary bg-hover hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
             >
               <FiLogOut size={20} />
               <span>Выйти</span>

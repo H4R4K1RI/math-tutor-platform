@@ -72,7 +72,9 @@ function AppContent() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isChatPage = location.pathname.startsWith('/chat/');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    return window.innerWidth >= 1024;
+  });
 
   useEffect(() => {
     initSocket();
@@ -84,15 +86,17 @@ function AppContent() {
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
+  const showMenuButton = !isAuthPage && !isChatPage && (window.innerWidth < 1024 || !sidebarOpen);
+
   return (
-    <div className="h-screen w-screen flex flex-col overflow-hidden bg-dark-bg">
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+    <div className="min-h-screen bg-dark-bg flex flex-col">
+      {!isChatPage && <Header darkMode={darkMode} setDarkMode={setDarkMode} />}
       
-      {!isChatPage && !isAuthPage && (
+      {showMenuButton && (
         <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
+          onClick={() => setSidebarOpen(true)}
           className="fixed top-20 left-4 z-50 p-2 rounded-lg bg-dark-card border border-white/10 text-white hover:bg-white/10 transition shadow-xl"
-          aria-label="Toggle sidebar"
+          aria-label="Открыть меню"
         >
           <FiMenu size={24} />
         </button>
@@ -100,17 +104,16 @@ function AppContent() {
       
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'lg:ml-72' : ''}`}>
-        <div className="p-6 h-full">
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'lg:ml-72' : ''}`}>
+        <div className={`${isChatPage ? 'p-0 h-full' : 'p-6'}`}>
           <AppRoutes />
         </div>
       </main>
       
-      <Footer />
+      {!isChatPage && <Footer />}
     </div>
   );
-} 
-     
+}
 
 function App() {
   return (
