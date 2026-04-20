@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import apiClient from '../api/client';
 import { User } from '../types';
+import { initSocket, connectSocket, disconnectSocket, socket } from '../socket';
 
 interface AuthContextType {
   user: User | null;
@@ -42,6 +43,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     await apiClient.post('/auth/login', { email, password });
     await fetchUser();
+    if (!socket) initSocket();
+    connectSocket();
+
   };
 
   const register = async (email: string, full_name: string, password: string) => {
@@ -54,9 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } catch (error) {
     console.error('Logout error:', error);
   } finally {
-    localStorage.removeItem('access_token');
     setUser(null);
-    // Принудительно перенаправляем на страницу входа
+    disconnectSocket();
     window.location.href = '/login';
   }
 };

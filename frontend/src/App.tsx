@@ -74,11 +74,7 @@ function AppContent() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  useEffect(() => {
-    initSocket();
-  }, []);
-
-  useEffect(() => {
+ useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('darkMode', darkMode.toString());

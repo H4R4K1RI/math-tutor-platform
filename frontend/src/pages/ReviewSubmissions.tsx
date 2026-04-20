@@ -37,13 +37,18 @@ const ReviewSubmissions: React.FC = () => {
 
   useEffect(() => {
     const handleUpdate = () => fetchData();
-    socket.on('submission_updated', handleUpdate);
-    socket.on('assignment_updated', handleUpdate);
+    if (socket) {
+      socket.on('submission_updated', handleUpdate);
+      socket.on('assignment_updated', handleUpdate);
+    }
+
     return () => {
-      socket.off('submission_updated', handleUpdate);
-      socket.off('assignment_updated', handleUpdate);
+      if (socket) {
+        socket.off('submission_updated', handleUpdate);
+        socket.off('assignment_updated', handleUpdate);
+      }
     };
-  }, [skip]);
+  }, [skip, socket]);
 
   const updateStatus = async (id: number, status: string, feedback: string) => {
     try {

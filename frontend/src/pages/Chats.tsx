@@ -52,19 +52,23 @@ const Chats: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchChats();
-    if (isTeacher) fetchStudents();
-    
+  fetchChats();
+  if (isTeacher) fetchStudents();
+  
+  if (socket) {
     socket.on('new_message', () => fetchChats());
     socket.on('chat_deleted', () => fetchChats());
     socket.on('chat_cleared', () => fetchChats());
-    
-    return () => {
+  }
+  
+  return () => {
+    if (socket) {
       socket.off('new_message');
       socket.off('chat_deleted');
       socket.off('chat_cleared');
-    };
-  }, [isTeacher]);
+    }
+  };
+}, [isTeacher, socket]);
 
   const createChat = async () => {
     if (!selectedStudent) return;

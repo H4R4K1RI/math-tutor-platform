@@ -62,7 +62,7 @@ const ChatRoom: React.FC = () => {
     try {
       const response = await apiClient.get(`/chats/${chatId}/messages`);
       setMessages(response.data);
-      if (socket.connected) {
+      if (socket?.connected) {
         socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
       }
     } catch (error) {
@@ -86,7 +86,7 @@ const ChatRoom: React.FC = () => {
   };
 
   useEffect(() => {
-    if (chatId) {
+    if (chatId && socket) {
       fetchMessages();
       fetchChatInfo();
       
@@ -97,8 +97,8 @@ const ChatRoom: React.FC = () => {
       const handleNewMessage = (data: any) => {
         if (data.chat_id === chatId) {
           setMessages(prev => [...prev, data]);
-          if (data.sender_id !== user?.id && socket.connected) {
-            socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+          if (data.sender_id !== user?.id && socket?.connected) {
+            socket?.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
           }
         }
       };
@@ -144,15 +144,17 @@ const ChatRoom: React.FC = () => {
       socket.on('connect_error', handleConnectError);
 
       return () => {
-        socket.off('new_message', handleNewMessage);
-        socket.off('chat_cleared', handleChatCleared);
-        socket.off('chat_deleted', handleChatDeleted);
-        socket.off('message_edited', handleMessageEdited);
-        socket.off('message_deleted', handleMessageDeleted);
-        socket.off('connect_error', handleConnectError);
+        if (socket) {
+          socket.off('new_message', handleNewMessage);
+          socket.off('chat_cleared', handleChatCleared);
+          socket.off('chat_deleted', handleChatDeleted);
+          socket.off('message_edited', handleMessageEdited);
+          socket.off('message_deleted', handleMessageDeleted);
+          socket.off('connect_error', handleConnectError);
+        }
       };
     }
-  }, [chatId, user?.id, navigate]);
+  }, [chatId, user?.id, navigate, socket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -162,7 +164,7 @@ const ChatRoom: React.FC = () => {
     e.preventDefault();
     if (!newMessage.trim() || !chatId) return;
     
-    if (!socket.connected) {
+    if (!socket?.connected) {
       toast.error('Нет соединения с сервером');
       return;
     }

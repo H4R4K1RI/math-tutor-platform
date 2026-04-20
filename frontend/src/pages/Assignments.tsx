@@ -53,15 +53,17 @@ const Assignments: React.FC = () => {
     const handleAssignmentUpdate = () => {
       fetchAssignments();
     };
-    
-    socket.on('assignment_updated', handleAssignmentUpdate);
-    socket.on('assignment_deleted', handleAssignmentUpdate);
-    
+    if (socket) {
+      socket.on('assignment_updated', handleAssignmentUpdate);
+      socket.on('assignment_deleted', handleAssignmentUpdate);
+    }
     return () => {
-      socket.off('assignment_updated', handleAssignmentUpdate);
-      socket.off('assignment_deleted', handleAssignmentUpdate);
+      if (socket) {
+        socket.off('assignment_updated', handleAssignmentUpdate);
+        socket.off('assignment_deleted', handleAssignmentUpdate);
+      }
     };
-  }, [skip]);
+  }, [skip, socket]);
 
   const handleMultipleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

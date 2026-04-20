@@ -78,17 +78,21 @@ const Dashboard: React.FC = () => {
         fetchSubmissions();
       }
     };
-    
-    socket.on('assignment_updated', handleUpdate);
-    socket.on('submission_updated', handleUpdate);
-    socket.on('assignment_deleted', handleUpdate);
-    
+
+    if (socket) {
+      socket.on('assignment_updated', handleUpdate);
+      socket.on('submission_updated', handleUpdate);
+      socket.on('assignment_deleted', handleUpdate);
+    }
+
     return () => {
-      socket.off('assignment_updated', handleUpdate);
-      socket.off('submission_updated', handleUpdate);
-      socket.off('assignment_deleted', handleUpdate);
+      if (socket) {
+        socket.off('assignment_updated', handleUpdate);
+        socket.off('submission_updated', handleUpdate);
+        socket.off('assignment_deleted', handleUpdate);
+      }
     };
-  }, [skip, isTeacher]);
+  }, [skip, isTeacher, socket]);
 
   if (loading) {
     return (
