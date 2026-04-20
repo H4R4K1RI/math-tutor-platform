@@ -28,6 +28,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await apiClient.get('/auth/me');
       setUser(response.data);
+      if (!socket) initSocket();
+      connectSocket();
     } catch (error) {
       console.error('Failed to fetch user:', error);
       setUser(null);
