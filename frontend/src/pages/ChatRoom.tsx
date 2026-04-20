@@ -289,10 +289,10 @@ const ChatRoom: React.FC = () => {
             <h2 className="text-xl font-semibold text-white">{otherUserName || 'Чат'}</h2>
           </div>
           <div className="flex gap-3 mt-3">
-            <button onClick={handleClearHistory} className="text-sm text-gray-400 hover:text-danger transition">
+            <button onClick={handleClearHistory} className="px-3 py-1 rounded-lg bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition-all duration-200 text-sm font-medium">
               🗑️ Очистить
             </button>
-            <button onClick={handleDeleteChat} className="text-sm text-gray-400 hover:text-danger transition">
+            <button onClick={handleDeleteChat} className="px-3 py-1 rounded-lg bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white transition-all duration-200 text-sm font-medium">
               ❌ Удалить чат
             </button>
           </div>

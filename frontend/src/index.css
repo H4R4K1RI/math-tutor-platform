@@ -24,14 +24,14 @@
 /* ========== ТЁМНАЯ ТЕМА ========== */
 .dark {
   --bg-primary: #0a0a0a;
-  --bg-card: #1a3b2f;
-  --bg-hover: #2a4a3a;
+  --bg-card: #1a1a1a;
+  --bg-hover: #2a2a2a;
   --text-primary: #e0e0e0;
   --text-secondary: #b0b0b0;
   --text-muted: #888888;
   --border-color: #2a2a2a;
-  --accent: #8b5a2b;
-  --accent-light: #2a2a1a;
+  --accent: #4a9b6e;
+  --accent-light: #1a2a1a;
   --danger: #e74c3c;
   --danger-light: #4a1a1a;
   --success: #2ecc71;
@@ -42,14 +42,15 @@
 
 /* ========== БАЗОВЫЕ СТИЛИ ========== */
 * {
-  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
-  transition-duration: 200ms;
-  transition-timing-function: ease;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-html {
-  overflow-y: scroll;
-  scroll-behavior: smooth;
+html, body, #root {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 body {
@@ -60,17 +61,18 @@ body {
 
 /* ========== СКРОЛЛБАР ========== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
   background: var(--bg-card);
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--accent);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -89,25 +91,12 @@ body {
   to { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; }
-  50% { opacity: 1; }
-}
-
 .fade-in {
   animation: fadeIn 0.3s ease forwards;
 }
 
 .slide-in {
   animation: slideIn 0.3s ease forwards;
-}
-
-/* ========== SKELETON LOADER ========== */
-.skeleton {
-  background: linear-gradient(90deg, var(--border-color) 25%, var(--bg-card) 50%, var(--border-color) 75%);
-  background-size: 200% 100%;
-  animation: pulse 1.5s ease-in-out infinite;
-  border-radius: 8px;
 }
 
 /* ========== КАРТОЧКИ ========== */
@@ -117,25 +106,16 @@ body {
   border-radius: 16px;
   padding: 1.5rem;
   border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
 }
 
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  padding: 1px;
-  background: linear-gradient(135deg, var(--accent), var(--accent));
-  opacity: 0.3;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+.gradient-border:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
-.bg-dark-card {
-  background-color: var(--bg-card);
+.dark .gradient-border:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
 /* ========== КНОПКИ ========== */
@@ -143,18 +123,24 @@ body {
   background: var(--accent);
   color: white;
   font-weight: 600;
-  padding: 10px 20px;
+  padding: 10px 24px;
   border-radius: 12px;
   transition: all 0.2s ease;
   border: none;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-primary:hover {
-  background: var(--accent);
-  opacity: 0.85;
   transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.05);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
 }
 
 .btn-secondary {
@@ -162,7 +148,7 @@ body {
   border: 1px solid var(--accent);
   color: var(--accent);
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 8px 20px;
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -179,7 +165,7 @@ body {
   border: 1px solid var(--danger);
   color: var(--danger);
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 8px 20px;
   border-radius: 12px;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -195,7 +181,7 @@ body {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 10px 16px;
+  padding: 12px 16px;
   color: var(--text-primary);
   transition: all 0.2s ease;
   width: 100%;
@@ -207,56 +193,80 @@ body {
   box-shadow: 0 0 0 3px rgba(46, 125, 94, 0.2);
 }
 
-/* ========== ТЕКСТ ========== */
-.text-accent {
-  color: var(--accent);
+.dark .input:focus {
+  box-shadow: 0 0 0 3px rgba(74, 155, 110, 0.2);
 }
 
-.text-danger {
-  color: var(--danger);
-}
+/* ========== ЦВЕТА ========== */
+.text-accent { color: var(--accent); }
+.text-danger { color: var(--danger); }
+.text-success { color: var(--success); }
+.text-warning { color: var(--warning); }
 
-.text-success {
-  color: var(--success);
-}
+.bg-dark-card { background-color: var(--bg-card); }
+.bg-dark-bg { background-color: var(--bg-primary); }
+.bg-accent-light { background-color: var(--accent-light); }
+.bg-danger-light { background-color: var(--danger-light); }
+.bg-success-light { background-color: var(--success-light); }
+.bg-warning-light { background-color: var(--warning-light); }
 
-.text-warning {
+/* ========== СТАТУСЫ ========== */
+.status-pending {
+  background-color: var(--warning-light);
   color: var(--warning);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-/* ========== ЦВЕТА ТЕКСТА ========== */
-.text-white, .text-gray-100, .text-gray-200, .text-gray-300 {
-  color: var(--text-primary);
+.status-approved {
+  background-color: var(--success-light);
+  color: var(--success);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
-.text-gray-400, .text-gray-500, .text-gray-600 {
-  color: var(--text-secondary);
+.status-rejected {
+  background-color: var(--danger-light);
+  color: var(--danger);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 /* ========== ГРАНИЦЫ ========== */
-.border, .border-white\/10, .border-gray-200, .border-gray-300 {
+.border-white\/10 {
   border-color: var(--border-color);
 }
 
-/* ========== ФОНЫ ========== */
-.bg-dark-bg {
-  background-color: var(--bg-primary);
+/* ========== ТЕКСТ ========== */
+.text-white, .text-gray-100 {
+  color: var(--text-primary);
 }
 
-.bg-accent-light {
-  background-color: var(--accent-light);
+.text-gray-300, .text-gray-400 {
+  color: var(--text-secondary);
 }
 
-.bg-danger-light {
-  background-color: var(--danger-light);
+.text-gray-500, .text-gray-600 {
+  color: var(--text-muted);
 }
 
-.bg-success-light {
-  background-color: var(--success-light);
+/* ========== ФОНЫ ДЛЯ ЧАТА ========== */
+.bg-gray-800 {
+  background-color: var(--bg-card);
 }
 
-.bg-warning-light {
-  background-color: var(--warning-light);
+.dark .bg-gray-800 {
+  background-color: #2a2a2a;
+}
+
+.bg-gray-700 {
+  background-color: var(--bg-hover);
 }
 
 /* ========== HOVER ЭФФЕКТЫ ========== */
@@ -267,63 +277,23 @@ body {
 .hover\:bg-white\/10:hover {
   background-color: var(--bg-hover);
 }
-
-/* ========== ЧАТ ========== */
-.bg-gray-200 {
-  background-color: var(--bg-hover);
-}
-
-.dark .bg-gray-200 {
-  background-color: var(--bg-hover);
-}
-
-/* ========== ССЫЛКИ ========== */
-a, .link {
-  color: var(--accent);
-  transition: all 0.2s ease;
-}
-
-a:hover, .link:hover {
-  color: var(--accent);
-  opacity: 0.8;
-}
-
-/* ========== МОДАЛЬНЫЕ ОКНА ========== */
-.modal-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-}
-
-/* ========== СТАТУСЫ ========== */
-.status-pending {
-  background-color: var(--warning-light);
-  color: var(--warning);
-}
-
-.status-approved {
-  background-color: var(--success-light);
-  color: var(--success);
-}
-
-.status-rejected {
-  background-color: var(--danger-light);
-  color: var(--danger);
-}
-
-/* ========== ПРОЧЕЕ ========== */
-.bg-dark-card {
+/* ========== ДОПОЛНИТЕЛЬНЫЕ КЛАССЫ ДЛЯ САЙДБАРА ========== */
+.bg-card {
   background-color: var(--bg-card);
 }
 
-.shadow, .shadow-md, .shadow-lg, .shadow-xl {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+.bg-hover {
+  background-color: var(--bg-hover);
 }
 
-.dark .shadow, .dark .shadow-md, .dark .shadow-lg, .dark .shadow-xl {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.border-border {
+  border-color: var(--border-color);
 }

@@ -74,14 +74,18 @@ function AppContent() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
- useEffect(() => {
+  useEffect(() => {
+    initSocket();
+  }, []);
+
+  useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
 
   return (
-    <div className="min-h-screen bg-dark-bg flex flex-col">
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-dark-bg">
       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
       
       {!isChatPage && !isAuthPage && (
@@ -96,8 +100,8 @@ function AppContent() {
       
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'lg:ml-72' : ''}`}>
-        <div className="p-6">
+      <main className={`flex-1 overflow-y-auto transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'lg:ml-72' : ''}`}>
+        <div className="p-6 h-full">
           <AppRoutes />
         </div>
       </main>
@@ -105,7 +109,8 @@ function AppContent() {
       <Footer />
     </div>
   );
-}
+} 
+     
 
 function App() {
   return (
