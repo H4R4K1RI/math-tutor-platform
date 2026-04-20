@@ -61,3 +61,15 @@ async def upload_file(
         "size": os.path.getsize(file_path),
         "content_type": file.content_type
     }
+
+def delete_file(file_url: str):
+    """Удаляет файл с диска"""
+    try:
+        # Из URL получаем имя файла /static/filename.jpg
+        filename = file_url.replace('/static/', '')
+        file_path = os.path.join(UPLOAD_DIR, filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            print(f"Deleted file: {file_path}")
+    except Exception as e:
+        print(f"Error deleting file: {e}")

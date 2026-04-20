@@ -15,6 +15,11 @@ export const initSocket = () => {
   socket.on('disconnect', () => console.log('Socket.IO disconnected'));
   socket.on('connect_error', (error) => console.error('Socket connection error:', error));
   
+  // Для отладки - прикрепляем socket к window
+  if (typeof window !== 'undefined') {
+    (window as any).socket = socket;
+  }
+  
   return socket;
 };
 
@@ -29,3 +34,5 @@ export const disconnectSocket = () => {
     socket.disconnect();
   }
 };
+
+

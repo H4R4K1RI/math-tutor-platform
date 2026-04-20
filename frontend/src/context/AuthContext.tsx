@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import apiClient from '../api/client';
 import { User } from '../types';
 import { initSocket, connectSocket, disconnectSocket, socket } from '../socket';
@@ -23,14 +23,24 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isLoggingOut = useRef(false);
 
   const fetchUser = async () => {
+    // Если мы выходим - не делаем запрос
+    if (isLoggingOut.current) {
+      setIsLoading(false);
+      return;
+    }
+    
     try {
       const response = await apiClient.get('/auth/me');
       setUser(response.data);
+      
+      // Подключаем Socket.IO если пользователь авторизован
       if (!socket) initSocket();
       connectSocket();
-    } catch (error) {
+      
+    } catch (error: any) {
       console.error('Failed to fetch user:', error);
       setUser(null);
     } finally {
@@ -45,9 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     await apiClient.post('/auth/login', { email, password });
     await fetchUser();
-    if (!socket) initSocket();
-    connectSocket();
-
   };
 
   const register = async (email: string, full_name: string, password: string) => {
@@ -55,16 +62,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-  try {
-    await apiClient.post('/auth/logout');
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
+    isLoggingOut.current = true;
     setUser(null);
     disconnectSocket();
+    
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    document.cookie.split(";").forEach(function(c) {
+    document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+  });
+    
     window.location.href = '/login';
-  }
-};
+  };
 
   const isTeacher = user?.role === 'teacher';
 

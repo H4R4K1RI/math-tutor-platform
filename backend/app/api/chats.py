@@ -10,6 +10,8 @@ from app.models.chat import Chat, Message
 from app.schemas.chat import ChatResponse, MessageResponse, ChatCreate
 from app.core.dependencies import get_current_user
 from app.socket_manager import sio
+from app.api.uploads import delete_file
+import json
 
 router = APIRouter(prefix="/chats", tags=["chats"])
 
@@ -320,6 +322,14 @@ async def delete_message(
     if message.sender_id != current_user.id and current_user.role != "teacher":
         raise HTTPException(status_code=403, detail="You don't have permission to delete this message")
     
+    if message.files:
+        try:
+            files = json.loads(message.files)
+            for file_url in files:
+                delete_file(file_url)
+        except:
+            pass
+
     await db.delete(message)
     await db.commit()
     

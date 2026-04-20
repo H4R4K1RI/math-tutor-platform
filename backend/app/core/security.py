@@ -29,13 +29,17 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     to_encode.update({"exp": expire, "type": "refresh"})
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
-def decode_token(token: str) -> Optional[TokenPayload]:
+def decode_token(token: str, token_type: str = None) -> Optional[TokenPayload]:
     try:
         payload = jwt.decode(
-            token, 
-            settings.SECRET_KEY, 
+            token,
+            settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM]
         )
+
+        if token_type and payload.get("type") != token_type:
+            return None
+
         return TokenPayload(
             sub=payload.get("sub"),
             user_id=int(payload.get("user_id")) if payload.get("user_id") else None,

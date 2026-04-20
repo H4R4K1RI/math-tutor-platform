@@ -6,7 +6,7 @@ from slowapi.util import get_remote_address
 from app.db.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse, UserLogin
-from app.core.security import verify_password, get_password_hash, create_access_token
+from app.core.security import verify_password, get_password_hash, create_access_token, create_refresh_token, decode_token
 from app.core.dependencies import get_current_user
 from app.core.email import generate_verification_token, send_verification_email, verify_email_token
 from fastapi.responses import HTMLResponse
@@ -95,10 +95,19 @@ async def login(
     token_data = {
         "sub": user.email,
         "user_id": user.id,
-        "role": user.role
+        "role": user.role,
+        "type": "access"
     }
     access_token = create_access_token(token_data)
-    
+
+    refresh_data = {
+        "sub": user.email,
+        "user_id": user.id,
+        "role": user.role,
+        "type": "refresh"
+    }
+    refresh_token = create_refresh_token(refresh_data)
+
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -108,12 +117,22 @@ async def login(
         max_age=30 * 60,
         path="/"
     )
-    
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60,  # 7 дней
+        path="/"
+    )
     return {"message": "Вход выполнен успешно"}
 
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
     return {"message": "Выход выполнен успешно"}
 
 @router.get("/me", response_model=UserResponse)
@@ -222,3 +241,65 @@ async def verify_email(
     </body>
     </html>
     """
+@router.post("/refresh")
+async def refresh_token(
+    request: Request,
+    response: Response,
+    db: AsyncSession = Depends(get_db)
+):
+    """Обновление access токена через refresh token"""
+    
+    # Получаем refresh token из cookie
+    refresh_token = request.cookies.get("refresh_token")
+    
+    if not refresh_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No refresh token"
+        )
+    
+    # Декодируем refresh token
+    payload = decode_token(refresh_token)
+    
+    if not payload or not payload.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+    
+    # Проверяем, что это refresh token
+    # (нужно добавить тип токена в payload)
+    
+    # Получаем пользователя
+    result = await db.execute(
+        select(User).where(User.id == payload.user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user or not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or inactive"
+        )
+    
+    # Создаем новый access token
+    token_data = {
+        "sub": user.email,
+        "user_id": user.id,
+        "role": user.role,
+        "type": "access"  # Добавляем тип токена
+    }
+    new_access_token = create_access_token(token_data)
+    
+    # Устанавливаем новый access token в cookie
+    response.set_cookie(
+        key="access_token",
+        value=new_access_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=30 * 60,
+        path="/"
+    )
+    
+    return {"message": "Token refreshed"}
