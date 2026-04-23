@@ -7,6 +7,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import AnimatedPage from './components/AnimatedPage';
 import { initSocket } from './socket';
+import Privacy from './pages/Privacy';
+import Contacts from './pages/Contacts';
 
 // Ленивая загрузка страниц
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.default })));
@@ -58,8 +60,8 @@ function AppRoutes() {
         <Route path="/chat/:id" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
         <Route path="/chat/student/:studentId" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
         <Route path="/chat/assignment/:assignmentId" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
-        <Route path="/privacy" element={<LazyRoute><div className="text-white">Страница в разработке</div></LazyRoute>} />
-        <Route path="/contacts" element={<LazyRoute><div className="text-white">Страница в разработке</div></LazyRoute>} />
+        <Route path="/privacy" element={<LazyRoute><Privacy /></LazyRoute>} />
+        <Route path="/contacts" element={<LazyRoute><Contacts /></LazyRoute>} />
         <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
       </Routes>
     </AnimatePresence>
