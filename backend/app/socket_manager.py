@@ -35,8 +35,9 @@ async def disconnect(sid):
 async def join_chat(sid, data):
     chat_id = data.get('chat_id')
     if chat_id:
-        sio.enter_room(sid, f"chat_{chat_id}")
+        await sio.enter_room(sid, f"chat_{chat_id}")
         print(f"Client {sid} joined chat {chat_id}")
+        print(f"📋 Rooms for {sid}: {sio.rooms(sid)}")  # список комнат для этого клиента
 
 @sio.event
 async def send_message(sid, data):
@@ -82,6 +83,7 @@ async def send_message(sid, data):
     
     # Отправляем сообщение в комнату
     room = f"chat_{chat_id}"
+    print(f"📤 Sending to room: {room}")  # временная отладка
     await sio.emit('new_message', {
         'id': new_message.id,
         'chat_id': chat_id,
@@ -92,6 +94,7 @@ async def send_message(sid, data):
     }, room=room)
     
     print(f"Message sent to room {room}")
+    
 
 @sio.event
 async def mark_messages_read(sid, data):

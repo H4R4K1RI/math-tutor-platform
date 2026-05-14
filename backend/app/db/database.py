@@ -3,14 +3,12 @@ from sqlalchemy.orm import declarative_base
 import os
 from dotenv import load_dotenv
 
-# Явный путь к .env
-env_path = '/root/math-tutor-platform/backend/.env'
-load_dotenv(dotenv_path=env_path)
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    raise ValueError(f"DATABASE_URL not set. Checked path: {env_path}")
+    raise ValueError("DATABASE_URL not set. Please create .env file with DATABASE_URL")
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -28,6 +26,11 @@ AsyncSessionLocal = async_sessionmaker(
 )
 
 Base = declarative_base()
+
+async def init_db():
+    """Создаёт все таблицы в базе данных"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
 async def get_db():
     async with AsyncSessionLocal() as session:

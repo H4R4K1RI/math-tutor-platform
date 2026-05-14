@@ -23,6 +23,12 @@ app = FastAPI(
     }
 )
 
+from app.db.database import init_db
+
+@app.on_event("startup")
+async def startup():
+    await init_db()
+
 app.state.limiter = limiter
 
 # Кастомный обработчик rate limit
