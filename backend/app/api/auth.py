@@ -25,7 +25,9 @@ async def test_db(db: AsyncSession = Depends(get_db)):
         return {"status": "error", "message": str(e)}
 
 @router.post("/register", response_model=UserResponse)
+@limiter.limit("3/hour")
 async def register(
+    request: Request,
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db)
 ):

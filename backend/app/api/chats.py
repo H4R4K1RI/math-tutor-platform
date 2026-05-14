@@ -77,7 +77,7 @@ async def get_chats(
 @router.get("/{chat_id}/messages")
 async def get_messages(
     chat_id: int,
-    limit: int = 50,
+    limit: int = 500,
     offset: int = 0,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)

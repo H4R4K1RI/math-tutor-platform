@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
 import { socket } from '../socket';
 import { useAuth } from '../context/AuthContext';
-import { FiMessageCircle, FiPlus } from 'react-icons/fi';
+import { FiMessageCircle, FiPlus, FiSearch } from 'react-icons/fi';
 import AnimatedPage from '../components/AnimatedPage';
 
 interface Chat {
@@ -30,6 +30,7 @@ const Chats: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchChats = async () => {
     try {
@@ -51,24 +52,48 @@ const Chats: React.FC = () => {
     }
   };
 
+  // Фильтрация чатов по поиску
+  const filteredChats = chats.filter(chat =>
+    chat.other_user_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   useEffect(() => {
-  fetchChats();
-  if (isTeacher) fetchStudents();
-  
-  if (socket) {
-    socket.on('new_message', () => fetchChats());
-    socket.on('chat_deleted', () => fetchChats());
-    socket.on('chat_cleared', () => fetchChats());
-  }
-  
-  return () => {
+    const loadChats = () => {
+      fetchChats();
+      if (isTeacher) fetchStudents();
+    };
+
+    loadChats();
+
     if (socket) {
-      socket.off('new_message');
-      socket.off('chat_deleted');
-      socket.off('chat_cleared');
+      const handleNewMessage = () => {
+        console.log('🔄 New message event — refreshing chats');
+        fetchChats();
+      };
+
+      const handleChatDeleted = () => {
+        console.log('🗑️ Chat deleted — refreshing chats');
+        fetchChats();
+      };
+
+      const handleChatCleared = () => {
+        console.log('🧹 Chat cleared — refreshing chats');
+        fetchChats();
+      };
+
+      socket.on('new_message', handleNewMessage);
+      socket.on('chat_deleted', handleChatDeleted);
+      socket.on('chat_cleared', handleChatCleared);
+
+      return () => {
+        if (socket) {
+          socket.off('new_message', handleNewMessage);
+          socket.off('chat_deleted', handleChatDeleted);
+          socket.off('chat_cleared', handleChatCleared);
+        }
+      };
     }
-  };
-}, [isTeacher, socket]);
+  }, [isTeacher, socket]);
 
   const createChat = async () => {
     if (!selectedStudent) return;
@@ -93,15 +118,27 @@ const Chats: React.FC = () => {
       <div className="max-w-4xl mx-auto relative min-h-[calc(100vh-120px)]">
         <h1 className="text-2xl font-bold mb-6 text-white">Сообщения</h1>
         
-        {chats.length === 0 ? (
+        {/* Поле поиска */}
+        <div className="relative mb-4">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="🔍 Поиск по имени..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent"
+          />
+        </div>
+        
+        {filteredChats.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <FiMessageCircle size={48} className="mx-auto mb-4 opacity-50" />
-            <p>У вас пока нет чатов</p>
-            {isTeacher && <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>}
+            <p>{searchQuery ? 'Ничего не найдено' : 'У вас пока нет чатов'}</p>
+            {isTeacher && !searchQuery && <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>}
           </div>
         ) : (
           <div className="space-y-2">
-            {chats.map(chat => (
+            {filteredChats.map(chat => (
               <Link key={chat.id} to={`/chat/${chat.id}`} className="block bg-dark-card rounded-lg shadow hover:shadow-md transition p-4 border border-white/10">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">

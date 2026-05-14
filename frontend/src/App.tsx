@@ -9,7 +9,8 @@ import AnimatedPage from './components/AnimatedPage';
 import { initSocket } from './socket';
 import Privacy from './pages/Privacy';
 import Contacts from './pages/Contacts';
-
+import GlobalNotification from './components/GlobalNotification';
+import { ChatProvider } from './context/ChatContext';
 // Ленивая загрузка страниц
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.default })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.default })));
@@ -73,7 +74,7 @@ function AppContent() {
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isChatPage = location.pathname.startsWith('/chat/');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     initSocket();
@@ -84,6 +85,8 @@ function AppContent() {
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
+
+  
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col">
@@ -112,7 +115,10 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppContent />
+        <ChatProvider>
+          <GlobalNotification />
+          <AppContent />
+        </ChatProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -12,12 +12,22 @@ router = APIRouter(prefix="/upload", tags=["upload"])
 # Создаём папку для загрузок, если её нет
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 МБ
 @router.post("/")
 async def upload_file(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
+    # Проверка размера
+    file.file.seek(0, 2)  # перейти в конец файла
+    size = file.file.tell()
+    file.file.seek(0)  # вернуться в начало
+    
+    if size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large. Maximum size is {MAX_FILE_SIZE // (1024*1024)} MB"
+        )
     """
     Загрузка файла на сервер.
     Возвращает URL для доступа к файлу.

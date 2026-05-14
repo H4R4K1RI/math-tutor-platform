@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { FiSend, FiSmile, FiArrowLeft, FiEdit2, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import AnimatedPage from '../components/AnimatedPage';
+import { setActiveChat } from '../components/GlobalNotification';
 
 const EmojiPicker = lazy(() => import('emoji-picker-react'));
 
@@ -34,6 +35,17 @@ const ChatRoom: React.FC = () => {
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const originalTitle = useRef(document.title);
+
+  // Сообщаем глобальному компоненту, что этот чат активен
+  useEffect(() => {
+    if (chatId) {
+      setActiveChat(chatId);
+    }
+    return () => {
+      setActiveChat(null);
+    };
+  }, [chatId]);
 
   // Автоадаптация под адресную строку браузера
   useEffect(() => {
@@ -64,7 +76,7 @@ const ChatRoom: React.FC = () => {
     };
   }, []);
 
-  // Инициализация чата (остальное без изменений)
+  // Инициализация чата
   useEffect(() => {
     const initChat = async () => {
       try {
@@ -79,12 +91,7 @@ const ChatRoom: React.FC = () => {
           const newChatId = response.data.chat_id;
           navigate(`/chat/${newChatId}`, { replace: true });
           return;
-<div className="flex-1">
-      <h2 className="text-xl font-semibold text-white">{otherUserName || 'Чат'}</h2>
-      {isUserTyping && (
-        <p className="text-xs text-accent animate-pulse">печатает...</p>
-      )}
-    </div>        }
+        }
         if (id) setChatId(parseInt(id));
       } catch (error) {
         console.error('Error initializing chat:', error);
@@ -99,7 +106,9 @@ const ChatRoom: React.FC = () => {
   const fetchMessages = async () => {
     if (!chatId) return;
     try {
+      console.log(`📥 Fetching messages for chat ${chatId}`);
       const response = await apiClient.get(`/chats/${chatId}/messages`);
+      console.log('📥 Messages loaded:', response.data.length);
       setMessages(response.data);
       if (socket?.connected) {
         socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
@@ -130,18 +139,44 @@ const ChatRoom: React.FC = () => {
     if (!chatId || !socket) return;
 
     if (socket.connected) {
+      console.log('🟢 Socket connected, joining chat', chatId);
       socket.emit('join_chat', { chat_id: chatId });
     } else {
+      console.log('🟡 Socket not connected, waiting for connect...');
       socket.once('connect', () => {
+        console.log('🔵 Socket connected, joining chat', chatId);
         socket?.emit('join_chat', { chat_id: chatId });
       });
     }
 
     const handleNewMessage = (data: any) => {
+      console.log('📩 New message in room:', data);
       if (data.chat_id === chatId) {
-        setMessages(prev => [...prev, data]);
-        if (data.sender_id !== user?.id && socket?.connected) {
-          socket?.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+        // Проверяем, нет ли уже такого сообщения (избегаем дублей)
+        setMessages(prev => {
+          if (prev.some(msg => msg.id === data.id)) return prev;
+          return [...prev, data];
+        });
+        
+        if (data.sender_id !== user?.id) {
+          // Мигающий заголовок вкладки (только если вкладка не активна)
+          if (document.hidden) {
+            let count = 0;
+            const interval = setInterval(() => {
+              document.title = count % 2 === 0 ? '💬 Новое сообщение!' : originalTitle.current;
+              count++;
+              if (count > 6) {
+                clearInterval(interval);
+                document.title = originalTitle.current;
+              }
+            }, 500);
+            setTimeout(() => clearInterval(interval), 4000);
+          }
+
+          // Отмечаем сообщения как прочитанные
+          if (socket?.connected) {
+            socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+          }
         }
       }
     };
@@ -194,17 +229,22 @@ const ChatRoom: React.FC = () => {
     fetchChatInfo();
 
     return () => {
-      if (socket) {socket.off('new_message', handleNewMessage);
-      socket.off('chat_cleared', handleChatCleared);
-      socket.off('chat_deleted', handleChatDeleted);
-      socket.off('message_edited', handleMessageEdited);
-      socket.off('message_deleted', handleMessageDeleted);
-      socket.off('user_typing', handleUserTyping);}
+      if (socket) {
+        socket.off('new_message', handleNewMessage);
+        socket.off('chat_cleared', handleChatCleared);
+        socket.off('chat_deleted', handleChatDeleted);
+        socket.off('message_edited', handleMessageEdited);
+        socket.off('message_deleted', handleMessageDeleted);
+        socket.off('user_typing', handleUserTyping);
+      }
+      document.title = originalTitle.current;
     };
   }, [chatId, user?.id, navigate, socket]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }, [messages]);
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -221,6 +261,7 @@ const ChatRoom: React.FC = () => {
       sender_id: user.id, 
       message: newMessage.trim()
     });
+    
     setNewMessage('');
   };
 
@@ -300,7 +341,6 @@ const ChatRoom: React.FC = () => {
   return (
     <AnimatedPage>
       <div className="flex flex-col bg-dark-bg" style={{ height: viewportHeight }}>
-        {/* Header чата */}
         <div className="bg-dark-card shadow p-4 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button 
@@ -335,7 +375,6 @@ const ChatRoom: React.FC = () => {
           </div>
         </div>
 
-        {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3">
           {messages.length === 0 ? (
             <div className="text-center text-gray-500 py-10">Напишите первое сообщение</div>
@@ -409,7 +448,6 @@ const ChatRoom: React.FC = () => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Form */}
         <form onSubmit={sendMessage} className="border-t border-white/10 flex gap-2 relative flex-shrink-0 bg-dark-card px-4 py-3">
           <button 
             type="button" 
