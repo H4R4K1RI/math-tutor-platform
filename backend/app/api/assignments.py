@@ -13,6 +13,8 @@ from app.schemas.assignment import (
     AssignmentResponse, AssignmentListResponse
 )
 from app.core.dependencies import get_current_user, get_current_teacher
+from app.models.group_student import GroupStudent
+from app.models.group import Group
 
 router = APIRouter(prefix="/assignments", tags=["assignments"])
 
@@ -20,25 +22,57 @@ router = APIRouter(prefix="/assignments", tags=["assignments"])
 async def create_assignment(
     assignment_data: AssignmentCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_teacher)  # Только учитель
+    current_user: User = Depends(get_current_teacher)
 ):
     """Создание нового задания (только для учителя)"""
     
+    # Если выбрана группа, получаем всех учеников группы
+    students_ids = []
+    if assignment_data.group_id:
+        # Получаем учеников группы
+        result = await db.execute(
+            select(GroupStudent.student_id)
+            .where(GroupStudent.group_id == assignment_data.group_id)
+        )
+        students_ids = [row[0] for row in result.all()]
+        
+        # Создаём задание для каждого ученика группы
+        created_assignments = []
+        for student_id in students_ids:
+            new_assignment = Assignment(
+                title=assignment_data.title,
+                description=assignment_data.description,
+                attachments=assignment_data.attachments,
+                due_date=assignment_data.due_date,
+                teacher_id=current_user.id,
+                student_id=student_id,
+                group_id=assignment_data.group_id
+            )
+            db.add(new_assignment)
+            created_assignments.append(new_assignment)
+        
+        await db.commit()
+        for a in created_assignments:
+            await db.refresh(a)
+        
+        # Возвращаем первое задание (для API)
+        return created_assignments[0]
+    
+    # Если не выбрана группа — создаём одно задание
     new_assignment = Assignment(
         title=assignment_data.title,
         description=assignment_data.description,
         attachments=assignment_data.attachments,
         due_date=assignment_data.due_date,
         teacher_id=current_user.id,
-        student_id=assignment_data.student_id
+        student_id=assignment_data.student_id,
+        group_id=assignment_data.group_id
     )
     
     db.add(new_assignment)
     await db.commit()
-    await sio.emit('assignment_updated', {'action': 'created', 'assignment_id': new_assignment.id})
     await db.refresh(new_assignment)
-
-
+    await sio.emit('assignment_updated', {'action': 'created', 'assignment_id': new_assignment.id})
     
     return new_assignment
 

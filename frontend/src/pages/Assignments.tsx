@@ -5,9 +5,17 @@ import toast from 'react-hot-toast';
 import Pagination from '../components/Pagination';
 import { socket } from '../socket';
 
+interface Group {
+  id: number;
+  name: string;
+  description: string | null;
+  student_count: number;
+}
+
 const Assignments: React.FC = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [students, setStudents] = useState<User[]>([]);
+  const [groups, setGroups] = useState<Group[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [attachmentUrls, setAttachmentUrls] = useState<string[]>([]);
@@ -17,6 +25,7 @@ const Assignments: React.FC = () => {
     description: '',
     due_date: '',
     student_id: null as number | null,
+    group_id: null as number | null,
   });
 
   // Пагинация
@@ -43,9 +52,19 @@ const Assignments: React.FC = () => {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      const response = await apiClient.get('/groups');
+      setGroups(response.data);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+    }
+  };
+
   useEffect(() => {
     fetchAssignments();
     fetchStudents();
+    fetchGroups();
   }, [skip]);
 
   // WebSocket обновления
@@ -53,17 +72,19 @@ const Assignments: React.FC = () => {
     const handleAssignmentUpdate = () => {
       fetchAssignments();
     };
+    
     if (socket) {
       socket.on('assignment_updated', handleAssignmentUpdate);
       socket.on('assignment_deleted', handleAssignmentUpdate);
     }
+    
     return () => {
       if (socket) {
         socket.off('assignment_updated', handleAssignmentUpdate);
         socket.off('assignment_deleted', handleAssignmentUpdate);
       }
     };
-  }, [skip, socket]);
+  }, [skip]);
 
   const handleMultipleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -101,6 +122,7 @@ const Assignments: React.FC = () => {
         description: formData.description,
         due_date: formData.due_date ? new Date(formData.due_date).toISOString() : null,
         student_id: formData.student_id,
+        group_id: formData.group_id,
         attachments: attachmentsValue
       };
       
@@ -115,7 +137,7 @@ const Assignments: React.FC = () => {
       setEditingId(null);
       setAttachmentUrls([]);
       setExistingAttachmentUrls([]);
-      setFormData({ title: '', description: '', due_date: '', student_id: null });
+      setFormData({ title: '', description: '', due_date: '', student_id: null, group_id: null });
       fetchAssignments();
     } catch (error: any) {
       console.error('Error saving assignment:', error);
@@ -137,6 +159,7 @@ const Assignments: React.FC = () => {
       description: assignment.description,
       due_date: assignment.due_date ? assignment.due_date.slice(0, 16) : '',
       student_id: assignment.student_id,
+      group_id: null, // задание может быть не связано с группой
     });
     
     if (assignment.attachments) {
@@ -156,13 +179,22 @@ const Assignments: React.FC = () => {
     setAttachmentUrls([]);
     setShowForm(true);
     
-    // Прокрутка к форме редактирования
     setTimeout(() => {
       const formElement = document.getElementById('assignment-form');
       if (formElement) {
         formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 100);
+  };
+
+  const getSelectedValue = () => {
+    if (formData.group_id) {
+      return `group_${formData.group_id}`;
+    }
+    if (formData.student_id !== null) {
+      return `student_${formData.student_id}`;
+    }
+    return "all";
   };
 
   const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
@@ -172,7 +204,7 @@ const Assignments: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold dark:text-white">Управление заданиями</h1>
         <button
-          onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
+          onClick={() => { setShowForm(true); setEditingId(null); setFormData({ title: '', description: '', due_date: '', student_id: null, group_id: null }); setAttachmentUrls([]); setExistingAttachmentUrls([]); }}
           className="border border-[#2e7d5e] text-[#2e7d5e] hover:bg-[#2e7d5e] hover:text-white font-semibold px-4 py-2 rounded-lg transition bg-transparent"
         >
           + Создать задание
@@ -216,6 +248,43 @@ const Assignments: React.FC = () => {
               />
             </div>
             <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Назначить
+              </label>
+              <select
+                value={getSelectedValue()}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === "all") {
+                    setFormData({ ...formData, student_id: null, group_id: null });
+                  } else if (value.startsWith("group_")) {
+                    setFormData({ ...formData, student_id: null, group_id: parseInt(value.replace("group_", "")) });
+                  } else if (value.startsWith("student_")) {
+                    setFormData({ ...formData, student_id: parseInt(value.replace("student_", "")), group_id: null });
+                  }
+                }}
+                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
+              >
+                <option value="all">📚 Для всех учеников</option>
+                {groups.length > 0 && (
+                  <optgroup label="👥 Группы">
+                    {groups.map(group => (
+                      <option key={`group_${group.id}`} value={`group_${group.id}`}>
+                        📁 {group.name} ({group.student_count} учеников)
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="👤 Конкретные ученики">
+                  {students.map(student => (
+                    <option key={`student_${student.id}`} value={`student_${student.id}`}>
+                      👤 {student.full_name} ({student.email})
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Прикрепить файлы (можно несколько)</label>
               <input type="file" multiple onChange={handleMultipleFileUpload} className="border rounded-lg p-1 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white" />
               
@@ -251,24 +320,6 @@ const Assignments: React.FC = () => {
                 </div>
               )}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Назначить ученику</label>
-              <select
-                value={formData.student_id === null ? "all" : formData.student_id}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFormData({ ...formData, student_id: value === "all" ? null : parseInt(value) });
-                }}
-                className="w-full border rounded-lg p-2 dark:bg-[#2a2a2a] dark:border-gray-600 dark:text-white"
-              >
-                <option value="all">📚 Для всех учеников</option>
-                {students.map(student => (
-                  <option key={student.id} value={student.id}>
-                    👤 {student.full_name} ({student.email})
-                  </option>
-                ))}
-              </select>
-            </div>
             <div className="space-x-2">
               <button type="submit" className="bg-[#2e7d5e] hover:bg-[#1e5a44] text-white px-4 py-2 rounded-lg transition">
                 {editingId ? 'Обновить' : 'Создать'}
@@ -291,24 +342,28 @@ const Assignments: React.FC = () => {
         ) : (
           assignments.map(assignment => (
             <div key={assignment.id} className="border-b border-gray-200 dark:border-gray-700 p-4 hover:bg-gray-100 dark:hover:bg-[#1a2a1a] transition-colors duration-200">
-              <h3 className="font-semibold text-lg dark:text-white">{assignment.title}</h3>
-              <p className="text-gray-600 dark:text-gray-400 mt-1">{assignment.description}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                Дедлайн: {new Date(assignment.due_date).toLocaleString()}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
-                {assignment.student_id === null ? (
-                  <span className="text-blue-600 dark:text-[#4a9b6e]">📚 Для всех учеников</span>
-                ) : (
-                  <span>👤 Для ученика ID: {assignment.student_id}</span>
-                )}
-              </p>
-              {assignment.attachments && (
-                <p className="text-sm text-blue-600 dark:text-[#4a9b6e] mt-1">📎 Есть вложения</p>
-              )}
-              <div className="mt-3 space-x-2">
-                <button onClick={() => handleEdit(assignment)} className="text-blue-600 dark:text-[#4a9b6e] hover:underline">Редактировать</button>
-                <button onClick={() => handleDelete(assignment.id)} className="text-red-600 dark:text-red-400 hover:underline">Удалить</button>
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg dark:text-white">{assignment.title}</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mt-1">{assignment.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                    Дедлайн: {new Date(assignment.due_date).toLocaleString()}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
+                    {assignment.student_id === null ? (
+                      <span className="text-blue-600 dark:text-[#4a9b6e]">📚 Для всех учеников</span>
+                    ) : (
+                      <span>👤 Для ученика ID: {assignment.student_id}</span>
+                    )}
+                  </p>
+                  {assignment.attachments && (
+                    <p className="text-sm text-blue-600 dark:text-[#4a9b6e] mt-1">📎 Есть вложения</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => handleEdit(assignment)} className="text-blue-600 dark:text-[#4a9b6e] hover:underline">Редактировать</button>
+                  <button onClick={() => handleDelete(assignment.id)} className="text-red-600 dark:text-red-400 hover:underline">Удалить</button>
+                </div>
               </div>
             </div>
           ))

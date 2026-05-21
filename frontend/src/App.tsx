@@ -11,6 +11,20 @@ import Privacy from './pages/Privacy';
 import Contacts from './pages/Contacts';
 import GlobalNotification from './components/GlobalNotification';
 import { ChatProvider } from './context/ChatContext';
+import StudentsPage from './pages/StudentsPage';
+import StudentStatsPage from './pages/StudentStatsPage';
+import GroupsPage from './pages/GroupsPage';
+import GroupDetailPage from './pages/GroupDetailPage';
+import ProfilePage from './pages/ProfilePage';
+import TutorPage from './pages/TutorPage';
+import LandingPage from './pages/LandingPage';
+import TestsPage from './pages/TestsPage';
+import TestEditorPage from './pages/TestEditorPage';
+import TakeTestPage from './pages/TakeTestPage';
+import TestResultPage from './pages/TestResultPage';
+import TestResultsTeacherPage from './pages/TestResultsTeacherPage';
+import MyTestsPage from './pages/MyTestsPage';
+
 // Ленивая загрузка страниц
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.default })));
 const Register = lazy(() => import('./pages/Register').then(module => ({ default: module.default })));
@@ -63,7 +77,19 @@ function AppRoutes() {
         <Route path="/chat/assignment/:assignmentId" element={<ProtectedRoute><LazyRoute><ChatRoom /></LazyRoute></ProtectedRoute>} />
         <Route path="/privacy" element={<LazyRoute><Privacy /></LazyRoute>} />
         <Route path="/contacts" element={<LazyRoute><Contacts /></LazyRoute>} />
-        <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} />} />
+        <Route path="/students" element={<TeacherRoute><LazyRoute><StudentsPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/students/:id" element={<TeacherRoute><LazyRoute><StudentStatsPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/groups" element={<TeacherRoute><LazyRoute><GroupsPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/groups/:id" element={<TeacherRoute><LazyRoute><GroupDetailPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><LazyRoute><ProfilePage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/tutor/:id" element={<LazyRoute><TutorPage /></LazyRoute>} />
+        <Route path="/tests" element={<TeacherRoute><LazyRoute><TestsPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/tests/new" element={<TeacherRoute><LazyRoute><TestEditorPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/tests/:id/edit" element={<TeacherRoute><LazyRoute><TestEditorPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/my-tests" element={<ProtectedRoute><LazyRoute><MyTestsPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/test/:id" element={<LazyRoute><TakeTestPage /></LazyRoute>} />
+        <Route path="/test/:id/result" element={<LazyRoute><TestResultPage /></LazyRoute>} />
+        <Route path="/tests/:id/results" element={<TeacherRoute><LazyRoute><TestResultsTeacherPage /></LazyRoute></TeacherRoute>} />
       </Routes>
     </AnimatePresence>
   );
@@ -85,8 +111,6 @@ function AppContent() {
     else document.documentElement.classList.remove('dark');
     localStorage.setItem('darkMode', darkMode.toString());
   }, [darkMode]);
-
-  
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col">
@@ -114,12 +138,17 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ChatProvider>
-          <GlobalNotification />
-          <AppContent />
-        </ChatProvider>
-      </AuthProvider>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/*" element={
+          <AuthProvider>
+            <ChatProvider>
+              <GlobalNotification />
+              <AppContent />
+            </ChatProvider>
+          </AuthProvider>
+        } />
+      </Routes>
     </BrowserRouter>
   );
 }

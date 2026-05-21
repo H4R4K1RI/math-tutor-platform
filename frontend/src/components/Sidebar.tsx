@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiBook, FiCheckCircle, FiLogOut, FiSun, FiMoon, FiMessageCircle, FiX, FiUser, FiMail } from 'react-icons/fi';
+import { FiHome, FiBook, FiCheckCircle, FiLogOut, FiSun, FiMoon, FiMessageCircle, FiX, FiUser, FiMail, FiUsers, FiFileText } from 'react-icons/fi';
 import apiClient from '../api/client';
 import { socket } from '../socket';
+
 
 interface SidebarProps {
   darkMode: boolean;
@@ -140,19 +141,50 @@ const Sidebar: React.FC<SidebarProps> = ({ darkMode, setDarkMode, isOpen, onClos
           <div className="space-y-1 px-4">
             {user && (
               <>
+                {isTeacher && (
+                  <>
+                  <Link to="/profile" onClick={handleLinkClick} className={navLinkClass('/profile')}>
+                      <FiUser size={20} />
+                      <span>Профиль</span>
+                    </Link>
+
+                  </>
+                )}
+
                 <Link to="/dashboard" onClick={handleLinkClick} className={navLinkClass('/dashboard')}>
-                  <FiHome size={20} /><span>Дашборд</span>
+                  <FiHome size={20} />
+                  <span>Дашборд</span>
                 </Link>
+
                 {isTeacher && (
                   <>
                     <Link to="/assignments" onClick={handleLinkClick} className={navLinkClass('/assignments')}>
-                      <FiBook size={20} /><span>Задания</span>
-                    </Link>
-                    <Link to="/review" onClick={handleLinkClick} className={navLinkClass('/review')}>
-                      <FiCheckCircle size={20} /><span>Проверка решений</span>
+                      <FiBook size={20} />
+                      <span>Задания</span>
                     </Link>
                   </>
                 )}
+                <Link to="/tests" onClick={handleLinkClick} className={navLinkClass('/tests')}>
+                  <FiFileText size={20} />
+                  <span>Тесты</span>
+                </Link>
+                {isTeacher && (
+                  <>
+                    <Link to="/review" onClick={handleLinkClick} className={navLinkClass('/review')}>
+                      <FiCheckCircle size={20} />
+                      <span>Проверка решений</span>
+                    </Link>
+                    <Link to="/groups" onClick={handleLinkClick} className={navLinkClass('/groups')}>
+                      <FiUsers size={20} />
+                      <span>Группы</span>
+                    </Link>
+                    <Link to="/students" onClick={handleLinkClick} className={navLinkClass('/students')}>
+                      <FiUsers size={20} />
+                      <span>Ученики</span>
+                    </Link>
+                  </>
+                )}
+
                 <Link to="/chats" onClick={handleLinkClick} className={navLinkClass('/chats')}>
                   <FiMessageCircle size={20} />
                   <span>Чаты</span>

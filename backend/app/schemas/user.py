@@ -2,6 +2,7 @@ from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
 
+
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
@@ -14,6 +15,13 @@ class UserResponse(UserBase):
     role: str  # Изменено: str вместо Enum
     is_active: bool
     created_at: datetime
+    avatar: Optional[str] = None
+    about: Optional[str] = None
+    education: Optional[str] = None
+    experience_years: Optional[int] = 0
+    total_students: Optional[int] = 0
+    total_lessons: Optional[int] = 0
+    rating: Optional[float] = 0
     
     class Config:
         from_attributes = True
@@ -32,3 +40,10 @@ class TokenPayload(BaseModel):
     user_id: Optional[int] = None
     role: Optional[str] = None  # Изменено: str вместо Enum
     exp: Optional[datetime] = None
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    avatar: Optional[str] = None
+    about: Optional[str] = None
+    education: Optional[str] = None
+    experience_years: Optional[int] = None

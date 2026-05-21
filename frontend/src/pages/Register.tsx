@@ -1,9 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 import AnimatedPage from '../components/AnimatedPage';
 
 const Register: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const inviteCode = searchParams.get('invite');
+  
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +29,17 @@ const Register: React.FC = () => {
     }
     try {
       await register(email, fullName, password);
+      
+      // Если есть код приглашения, привязываем ученика к учителю
+      if (inviteCode) {
+        try {
+          await apiClient.post(`/invitations/use/${inviteCode}`);
+        } catch (inviteError) {
+          console.error('Error using invitation:', inviteError);
+          // Не показываем ошибку пользователю, так как регистрация уже прошла успешно
+        }
+      }
+      
       setSuccess(true);
     } catch (err) {
       setError('Ошибка регистрации. Попробуйте другой email.');
@@ -50,19 +65,43 @@ const Register: React.FC = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input" required />
+                  <input 
+                    type="email" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    className="input" 
+                    required 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Полное имя</label>
-                  <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="input" required />
+                  <input 
+                    type="text" 
+                    value={fullName} 
+                    onChange={(e) => setFullName(e.target.value)} 
+                    className="input" 
+                    required 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Пароль</label>
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="input" required />
+                  <input 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    className="input" 
+                    required 
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-1">Подтвердите пароль</label>
-                  <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="input" required />
+                  <input 
+                    type="password" 
+                    value={confirmPassword} 
+                    onChange={(e) => setConfirmPassword(e.target.value)} 
+                    className="input" 
+                    required 
+                  />
                 </div>
                 <button type="submit" className="btn-primary w-full">Зарегистрироваться</button>
               </form>

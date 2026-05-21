@@ -345,3 +345,6 @@ body {
     height: 100dvh;
   }
 }
+.hover\:border-accent:hover {
+  border-color: var(--accent);
+}

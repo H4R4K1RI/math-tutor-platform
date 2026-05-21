@@ -8,6 +8,7 @@ class AssignmentBase(BaseModel):
     attachments: Optional[str] = None
     due_date: datetime
     student_id: Optional[int] = None  # Если None — задание для всех
+    group_id: Optional[int] = None
 
 class AssignmentCreate(AssignmentBase):
     pass
@@ -18,12 +19,14 @@ class AssignmentUpdate(BaseModel):
     attachments: Optional[str] = None
     due_date: Optional[datetime] = None
     student_id: Optional[int] = None
+    group_id: Optional[int] = None
 
 class AssignmentResponse(AssignmentBase):
     id: int
     teacher_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    group_id: Optional[int] = None
     
     class Config:
         from_attributes = True

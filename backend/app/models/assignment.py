@@ -17,6 +17,6 @@ class Assignment(Base):
     # Связь с учеником (для кого задание)
     # NULL значит для всех учеников
     student_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
+    group_id = Column(Integer, ForeignKey("groups.id", ondelete="SET NULL"), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
