@@ -1,133 +1,241 @@
 import socketio
-from app.models.chat import Chat, Message
-from app.db.database import AsyncSessionLocal
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select, update
+from jose import JWTError, jwt
 
+from app.core.config import settings
+from app.core.logger import logger
+from app.db.database import AsyncSessionLocal
+from app.models.chat import Chat, Message
+from app.models.user import User
+
+# CORS нужен для Socket.IO, без дублирования с FastAPI
 sio = socketio.AsyncServer(
     cors_allowed_origins=[
-        "http://90.156.170.9:5173",
-        "http://localhost:5173",
-        "http://tutor-platform.ru:5173",
-        "http://www.tutor-platform.ru:5173",
+        "http://localhost",
+        "http://localhost:80",
+        "http://127.0.0.1",
+        "http://127.0.0.1:80",
         "https://tutor-platform.ru",
         "https://www.tutor-platform.ru",
     ],
-    async_mode='asgi'
+    async_mode="asgi",
 )
 
 socket_app = socketio.ASGIApp(sio)
 
-# Хранилище пользователей
-connected_users = {}
+# sid -> user_id (доверенный, из JWT)
+connected_users: dict[str, int] = {}
+
+
+def _extract_token_from_cookie(environ: dict) -> str | None:
+    """Извлекаем access_token из Cookie-заголовка."""
+    cookie_header = environ.get("HTTP_COOKIE", "")
+    if not cookie_header:
+        return None
+    for part in cookie_header.split(";"):
+        part = part.strip()
+        if part.startswith("access_token="):
+            return part[len("access_token="):]
+    return None
+
+
+def _decode_user_id(token: str) -> int | None:
+    """Декодируем JWT и достаём user_id. None — если невалидный."""
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        if payload.get("type") != "access":
+            return None
+        user_id = payload.get("user_id")
+        return int(user_id) if user_id else None
+    except (JWTError, ValueError, TypeError):
+        return None
+
 
 @sio.event
 async def connect(sid, environ):
-    print(f"Client connected: {sid}")
+    """Аутентификация при подключении через JWT в cookie."""
+    token = _extract_token_from_cookie(environ)
+    if not token:
+        logger.warning(f"Socket connect rejected (no token): {sid}")
+        raise socketio.exceptions.ConnectionRefusedError("Not authenticated")
+
+    user_id = _decode_user_id(token)
+    if not user_id:
+        logger.warning(f"Socket connect rejected (invalid token): {sid}")
+        raise socketio.exceptions.ConnectionRefusedError("Invalid token")
+
+    # Проверяем, что пользователь существует и активен
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if not user or not user.is_active:
+            logger.warning(f"Socket connect rejected (user not found/inactive): {sid}")
+            raise socketio.exceptions.ConnectionRefusedError("User not found or inactive")
+
+    connected_users[sid] = user_id
+    logger.info(f"Client connected: {sid} (user_id={user_id})")
+
+    # Подписываем на все чаты пользователя
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Chat).where(
+                (Chat.teacher_id == user_id) | (Chat.student_id == user_id)
+            )
+        )
+        chats = result.scalars().all()
+
+    for chat in chats:
+        await sio.enter_room(sid, f"chat_{chat.id}")
+
+    logger.info(f"User {user_id} joined {len(chats)} chats")
     return True
+
 
 @sio.event
 async def disconnect(sid):
-    if sid in connected_users:
-        del connected_users[sid]
-    print(f"Client disconnected: {sid}")
+    connected_users.pop(sid, None)
+    logger.info(f"Client disconnected: {sid}")
+
 
 @sio.event
 async def join_chat(sid, data):
-    chat_id = data.get('chat_id')
-    if chat_id:
-        sio.enter_room(sid, f"chat_{chat_id}")
-        print(f"Client {sid} joined chat {chat_id}")
+    """Присоединиться к комнате чата (только если пользователь — участник)."""
+    user_id = connected_users.get(sid)
+    if not user_id:
+        return
+
+    chat_id = data.get("chat_id")
+    if not chat_id:
+        return
+
+    # Проверяем, что пользователь — участник чата
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Chat).where(Chat.id == chat_id))
+        chat = result.scalar_one_or_none()
+
+    if not chat or user_id not in (chat.teacher_id, chat.student_id):
+        logger.warning(f"User {user_id} tried to join chat {chat_id} without access")
+        return
+
+    await sio.enter_room(sid, f"chat_{chat_id}")
+    logger.info(f"Client {sid} joined chat {chat_id}")
+
 
 @sio.event
 async def send_message(sid, data):
-    sender_id = data.get('sender_id')
-    chat_id = data.get('chat_id')
-    message_text = data.get('message', '').strip()
-    
-    print(f"send_message: sender={sender_id}, chat={chat_id}, msg={message_text}")
-    
-    if not message_text or not sender_id or not chat_id:
+    """Отправить сообщение. sender_id берётся из сессии, а не из data."""
+    user_id = connected_users.get(sid)
+    if not user_id:
         return
-    
+
+    chat_id = data.get("chat_id")
+    message_text = (data.get("message") or "").strip()
+
+    if not chat_id or not message_text:
+        return
+
     async with AsyncSessionLocal() as db:
-        # Проверяем, существует ли чат
         result = await db.execute(select(Chat).where(Chat.id == chat_id))
         chat = result.scalar_one_or_none()
-        
+
         if not chat:
-            print(f"Chat {chat_id} not found")
             return
-        
-        # Проверяем, что пользователь участник чата
-        if sender_id not in (chat.teacher_id, chat.student_id):
-            print(f"User {sender_id} not in chat {chat_id}")
+
+        # Проверяем, что sender_id — участник
+        if user_id not in (chat.teacher_id, chat.student_id):
+            logger.warning(f"User {user_id} tried to send to chat {chat_id} without access")
             return
-        
-        # Сохраняем сообщение
+
         new_message = Message(
             chat_id=chat_id,
-            sender_id=sender_id,
+            sender_id=user_id,
             message=message_text,
-            is_read=False
+            is_read=False,
         )
         db.add(new_message)
-        
-        # Обновляем время чата
         await db.execute(
             update(Chat).where(Chat.id == chat_id).values(updated_at=func.now())
         )
-        
         await db.commit()
         await db.refresh(new_message)
-    
-    # Отправляем сообщение в комнату
+
     room = f"chat_{chat_id}"
-    await sio.emit('new_message', {
-        'id': new_message.id,
-        'chat_id': chat_id,
-        'sender_id': sender_id,
-        'message': message_text,
-        'created_at': new_message.created_at.isoformat(),
-        'is_read': False
-    }, room=room)
-    
-    print(f"Message sent to room {room}")
+    await sio.emit(
+        "new_message",
+        {
+            "id": new_message.id,
+            "chat_id": chat_id,
+            "sender_id": user_id,
+            "message": message_text,
+            "created_at": new_message.created_at.isoformat(),
+            "is_read": False,
+        },
+        room=room,
+    )
+
 
 @sio.event
 async def mark_messages_read(sid, data):
-    chat_id = data.get('chat_id')
-    user_id = data.get('user_id')
-    
-    if not chat_id or not user_id:
+    """Пометить сообщения прочитанными. user_id берётся из сессии."""
+    user_id = connected_users.get(sid)
+    if not user_id:
         return
-    
+
+    chat_id = data.get("chat_id")
+    if not chat_id:
+        return
+
+    # Проверяем, что пользователь — участник
     async with AsyncSessionLocal() as db:
+        result = await db.execute(select(Chat).where(Chat.id == chat_id))
+        chat = result.scalar_one_or_none()
+        if not chat or user_id not in (chat.teacher_id, chat.student_id):
+            return
+
         await db.execute(
             update(Message)
             .where(Message.chat_id == chat_id)
             .where(Message.sender_id != user_id)
-            .where(Message.is_read == False)
+            .where(Message.is_read == False)  # noqa: E712
             .values(is_read=True)
         )
         await db.commit()
+
+    # Эмитим ТОЛЬКО в комнату чата, а не всем
+    await sio.emit(
+        "messages_read",
+        {"chat_id": chat_id, "user_id": user_id},
+        room=f"chat_{chat_id}",
+    )
+
+
 @sio.event
 async def typing_start(sid, data):
-    """Пользователь начал печатать"""
-    chat_id = data.get('chat_id')
+    user_id = connected_users.get(sid)
+    if not user_id:
+        return
+    chat_id = data.get("chat_id")
     if chat_id:
-        print(f"User started typing in chat {chat_id}")
-        await sio.emit('user_typing', {
-            'chat_id': chat_id,
-            'is_typing': True
-        }, room=f"chat_{chat_id}", skip_sid=sid)
+        await sio.emit(
+            "user_typing",
+            {"chat_id": chat_id, "user_id": user_id, "is_typing": True},
+            room=f"chat_{chat_id}",
+            skip_sid=sid,
+        )
+
 
 @sio.event
 async def typing_stop(sid, data):
-    """Пользователь перестал печатать"""
-    chat_id = data.get('chat_id')
+    user_id = connected_users.get(sid)
+    if not user_id:
+        return
+    chat_id = data.get("chat_id")
     if chat_id:
-        print(f"User stopped typing in chat {chat_id}")
-        await sio.emit('user_typing', {
-            'chat_id': chat_id,
-            'is_typing': False
-        }, room=f"chat_{chat_id}", skip_sid=sid)
+        await sio.emit(
+            "user_typing",
+            {"chat_id": chat_id, "user_id": user_id, "is_typing": False},
+            room=f"chat_{chat_id}",
+            skip_sid=sid,
+        )

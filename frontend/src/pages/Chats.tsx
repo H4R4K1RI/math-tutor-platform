@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
 import { socket } from '../socket';
 import { useAuth } from '../context/AuthContext';
-import { FiMessageCircle, FiPlus } from 'react-icons/fi';
+import { FiMessageCircle, FiPlus, FiSearch } from 'react-icons/fi';
 import AnimatedPage from '../components/AnimatedPage';
+import Pagination from '../components/Pagination';
 
 interface Chat {
   id: number;
@@ -30,11 +31,16 @@ const Chats: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [skip, setSkip] = useState(0);
+  const [total, setTotal] = useState(0);
+  const limit = 10;
 
   const fetchChats = async () => {
     try {
-      const response = await apiClient.get('/chats');
-      setChats(response.data);
+      const response = await apiClient.get('/chats', { params: { skip, limit } });
+      setChats(response.data.items || []);
+      setTotal(response.data.total || 0);
     } catch (error) {
       console.error('Error fetching chats:', error);
     } finally {
@@ -51,24 +57,29 @@ const Chats: React.FC = () => {
     }
   };
 
+  const filteredChats = chats.filter(chat =>
+    chat.other_user_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   useEffect(() => {
-  fetchChats();
-  if (isTeacher) fetchStudents();
-  
-  if (socket) {
-    socket.on('new_message', () => fetchChats());
-    socket.on('chat_deleted', () => fetchChats());
-    socket.on('chat_cleared', () => fetchChats());
-  }
-  
-  return () => {
-    if (socket) {
-      socket.off('new_message');
-      socket.off('chat_deleted');
-      socket.off('chat_cleared');
-    }
-  };
-}, [isTeacher, socket]);
+    fetchChats();
+    if (isTeacher) fetchStudents();
+  }, [isTeacher, skip]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = () => fetchChats();
+    socket.on('new_message', handleUpdate);
+    socket.on('chat_deleted', handleUpdate);
+    socket.on('chat_cleared', handleUpdate);
+    return () => {
+      if(socket){
+      socket.off('new_message', handleUpdate);
+      socket.off('chat_deleted', handleUpdate);
+      socket.off('chat_cleared', handleUpdate);
+      }
+    };
+  }, [skip]);
 
   const createChat = async () => {
     if (!selectedStudent) return;
@@ -92,16 +103,19 @@ const Chats: React.FC = () => {
     <AnimatedPage>
       <div className="max-w-4xl mx-auto relative min-h-[calc(100vh-120px)]">
         <h1 className="text-2xl font-bold mb-6 text-white">Сообщения</h1>
-        
-        {chats.length === 0 ? (
+        <div className="relative mb-4">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input type="text" placeholder="🔍 Поиск по имени..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-accent" />
+        </div>
+        {filteredChats.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <FiMessageCircle size={48} className="mx-auto mb-4 opacity-50" />
-            <p>У вас пока нет чатов</p>
-            {isTeacher && <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>}
+            <p>{searchQuery ? 'Ничего не найдено' : 'У вас пока нет чатов'}</p>
+            {isTeacher && !searchQuery && <p className="text-sm">Нажмите на кнопку ➕ в правом нижнем углу, чтобы начать общение</p>}
           </div>
         ) : (
           <div className="space-y-2">
-            {chats.map(chat => (
+            {filteredChats.map(chat => (
               <Link key={chat.id} to={`/chat/${chat.id}`} className="block bg-dark-card rounded-lg shadow hover:shadow-md transition p-4 border border-white/10">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -117,13 +131,12 @@ const Chats: React.FC = () => {
             ))}
           </div>
         )}
-
+        <Pagination total={total} limit={limit} skip={skip} onPageChange={(newSkip) => setSkip(newSkip)} />
         {isTeacher && (
           <button onClick={() => setShowModal(true)} className="fixed bottom-6 right-6 bg-accent hover:bg-accent/80 text-white p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-105 z-50">
             <FiPlus size={24} />
           </button>
         )}
-
         {showModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-dark-card rounded-lg shadow-xl p-6 w-full max-w-md border border-white/10">

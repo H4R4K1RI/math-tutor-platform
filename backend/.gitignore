@@ -1,0 +1,26 @@
+# Env
+.env
+.env.test
+.env.*
+*.env
+!*.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+venv/
+env/
+.pytest_cache/
+*.egg-info/
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+
+# Migrations (если хочешь игнорировать, обычно нет)
+# migrations/versions/

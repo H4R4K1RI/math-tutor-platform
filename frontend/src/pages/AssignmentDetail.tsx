@@ -27,7 +27,7 @@ const AssignmentDetail: React.FC = () => {
       ]);
       setAssignment(assignmentRes.data);
       const submissionsData = submissionsRes.data.items || submissionsRes.data;
-const existing = submissionsData.find((s: Submission) => s.assignment_id === Number(id));
+      const existing = submissionsData.find((s: Submission) => s.assignment_id === Number(id));
       if (existing) {
         setSubmission(existing);
         setContent(existing.content || '');
@@ -72,15 +72,25 @@ const existing = submissionsData.find((s: Submission) => s.assignment_id === Num
     setExistingFileUrls(existingFileUrls.filter((_, i) => i !== index));
   };
 
+  const validateForm = () => {
+    if (!content.trim() && fileUrls.length === 0 && existingFileUrls.length === 0) {
+      toast.error('Введите решение или прикрепите файл');
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
+    
     try {
       const allFiles = [...existingFileUrls, ...fileUrls];
       const filesValue = allFiles.length > 0 ? JSON.stringify(allFiles) : null;
       
       const submitData = {
         assignment_id: Number(id),
-        content: content || null,
+        content: content.trim() || null,
         files: filesValue
       };
       
@@ -92,16 +102,16 @@ const existing = submissionsData.find((s: Submission) => s.assignment_id === Num
         toast.success('✅ Решение отправлено!');
       }
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting solution:', error);
-      toast.error('❌ Ошибка при отправке');
+      toast.error(error.response?.data?.detail || '❌ Ошибка при отправке');
     }
   };
 
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
+  const SERVER_URL = '';  // относительный путь — идёт через Nginx
 
-  if (loading) return <div className="text-center py-10">Загрузка...</div>;
-  if (!assignment) return <div className="text-center py-10">Задание не найдено</div>;
+  if (loading) return <div className="text-center py-10 text-white">Загрузка...</div>;
+  if (!assignment) return <div className="text-center py-10 text-white">Задание не найдено</div>;
 
   return (
     <div className="container mx-auto p-4 max-w-3xl">

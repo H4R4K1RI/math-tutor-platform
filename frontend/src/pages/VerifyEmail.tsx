@@ -20,13 +20,20 @@ const VerifyEmail: React.FC = () => {
       try {
         const response = await apiClient.get(`/auth/verify-email?token=${token}`);
         setStatus('success');
-        setMessage(response.data.message);
+        setMessage(response.data.message || 'Email успешно подтверждён');
         setTimeout(() => {
           navigate('/login');
         }, 3000);
       } catch (error: any) {
         setStatus('error');
-        setMessage(error.response?.data?.detail || 'Ошибка подтверждения email');
+        const detail = error.response?.data?.detail;
+        let msg = 'Ошибка подтверждения email';
+        if (typeof detail === 'string') {
+          msg = detail;
+        } else if (Array.isArray(detail)) {
+          msg = detail.map((e: any) => e.msg).join('; ');
+        }
+        setMessage(msg);
       }
     };
 
@@ -48,9 +55,13 @@ const VerifyEmail: React.FC = () => {
         {status === 'success' && (
           <>
             <div className="text-6xl mb-4">✅</div>
-            <h2 className="text-2xl font-bold mb-2 text-green-600 dark:text-green-400">Email подтверждён!</h2>
+            <h2 className="text-2xl font-bold mb-2 text-green-600 dark:text-green-400">
+              Email подтверждён!
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{message}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-500">Перенаправление на страницу входа...</p>
+            <p className="text-sm text-gray-500 dark:text-gray-500">
+              Перенаправление на страницу входа...
+            </p>
             <Link to="/login" className="inline-block mt-4 text-[#2e7d5e] hover:underline">
               Перейти сейчас
             </Link>
@@ -60,7 +71,9 @@ const VerifyEmail: React.FC = () => {
         {status === 'error' && (
           <>
             <div className="text-6xl mb-4">❌</div>
-            <h2 className="text-2xl font-bold mb-2 text-red-600 dark:text-red-400">Ошибка подтверждения</h2>
+            <h2 className="text-2xl font-bold mb-2 text-red-600 dark:text-red-400">
+              Ошибка подтверждения
+            </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-4">{message}</p>
             <Link to="/login" className="inline-block mt-2 text-[#2e7d5e] hover:underline">
               Перейти ко входу

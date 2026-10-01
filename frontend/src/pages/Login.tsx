@@ -22,7 +22,11 @@ const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       const detail = err.response?.data?.detail;
-      setError(detail === 'Email not verified' ? 'Email не подтверждён. Проверьте почту.' : (detail || 'Неверный email или пароль'));
+      if (detail === 'Email not verified') {
+        setError('Email не подтверждён. Проверьте почту и перейдите по ссылке в письме.');
+      } else {
+        setError(detail || 'Неверный email или пароль');
+      }
     }
   };
 

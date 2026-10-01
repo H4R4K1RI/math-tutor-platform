@@ -1,13 +1,17 @@
-import os
+import asyncio
 import smtplib
 from email.message import EmailMessage
-from itsdangerous import URLSafeTimedSerializer
+
 from app.core.config import settings
+from app.core.logger import logger
+from itsdangerous import URLSafeTimedSerializer
 
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
 
+
 def generate_verification_token(email: str) -> str:
     return serializer.dumps(email, salt="email-verification")
+
 
 def verify_email_token(token: str, expiration: int = 3600) -> str | None:
     try:
@@ -16,20 +20,43 @@ def verify_email_token(token: str, expiration: int = 3600) -> str | None:
     except Exception:
         return None
 
-async def send_verification_email(email: str, token: str):
-    SMTP_HOST = os.getenv("SMTP_HOST", "smtp.beget.com")
-    SMTP_PORT = int(os.getenv("SMTP_PORT", 465))
-    SMTP_USER = os.getenv("SMTP_USER")
-    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-    FROM_EMAIL = os.getenv("SMTP_FROM_EMAIL", "noreply@tutor-platform.ru")
-    FROM_NAME = os.getenv("SMTP_FROM_NAME", "Math Tutor Platform")
-    
+
+def _send_email_sync(to_email: str, subject: str, text: str, html: str) -> bool:
+    """Синхронная отправка email (выполняется в executor)."""
+    SMTP_HOST = settings.SMTP_HOST or "smtp.beget.com"
+    SMTP_PORT = settings.SMTP_PORT or 465
+    SMTP_USER = settings.SMTP_USER
+    SMTP_PASSWORD = settings.SMTP_PASSWORD
+    FROM_EMAIL = settings.SMTP_FROM_EMAIL or "noreply@tutor-platform.ru"
+    FROM_NAME = settings.SMTP_FROM_NAME or "Math Tutor Platform"
+
     if not SMTP_USER or not SMTP_PASSWORD:
-        print("SMTP credentials not configured")
-        return
-    
+        logger.error("SMTP credentials not configured")
+        return False
+
+    msg = EmailMessage()
+    msg.set_content(text)
+    msg.add_alternative(html, subtype="html")
+    msg["Subject"] = subject
+    msg["From"] = f"{FROM_NAME} <{FROM_EMAIL}>"
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.send_message(msg)
+        logger.info(f"✅ Email sent to {to_email}")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Failed to send email: {e}")
+        return False
+
+
+async def send_verification_email(email: str, token: str):
+    """Асинхронная отправка письма с подтверждением email."""
+
     verify_url = f"https://tutor-platform.ru/api/auth/verify-email?token={token}"
-    
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -37,65 +64,15 @@ async def send_verification_email(email: str, token: str):
         <meta charset="UTF-8">
         <title>Подтверждение email</title>
         <style>
-            body {{
-                font-family: Arial, sans-serif;
-                background-color: #f4f4f4;
-                margin: 0;
-                padding: 0;
-            }}
-            .container {{
-                max-width: 600px;
-                margin: 0 auto;
-                background-color: #ffffff;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            }}
-            .header {{
-                background: linear-gradient(135deg, #1e3a2f 0%, #2d5a3f 100%);
-                color: white;
-                padding: 30px;
-                text-align: center;
-            }}
-            .header h1 {{
-                margin: 0;
-                font-size: 28px;
-            }}
-            .content {{
-                padding: 40px 30px;
-                text-align: center;
-            }}
-            .content p {{
-                color: #333;
-                line-height: 1.6;
-                margin-bottom: 30px;
-            }}
-            .button {{
-                display: inline-block;
-                background: linear-gradient(135deg, #2e7d5e 0%, #1e5a44 100%);
-                color: white;
-                text-decoration: none;
-                padding: 12px 32px;
-                border-radius: 8px;
-                font-weight: bold;
-                margin: 20px 0;
-            }}
-            .button:hover {{
-                background: linear-gradient(135deg, #1e5a44 0%, #2e7d5e 100%);
-            }}
-            .footer {{
-                background-color: #f8f9fa;
-                padding: 20px;
-                text-align: center;
-                font-size: 12px;
-                color: #666;
-                border-top: 1px solid #eee;
-            }}
-            .warning {{
-                font-size: 12px;
-                color: #999;
-                margin-top: 20px;
-            }}
+            body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }}
+            .container {{ max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }}
+            .header {{ background: linear-gradient(135deg, #1e3a2f 0%, #2d5a3f 100%); color: white; padding: 30px; text-align: center; }}
+            .header h1 {{ margin: 0; font-size: 28px; }}
+            .content {{ padding: 40px 30px; text-align: center; }}
+            .content p {{ color: #333; line-height: 1.6; margin-bottom: 30px; }}
+            .button {{ display: inline-block; background: linear-gradient(135deg, #2e7d5e 0%, #1e5a44 100%); color: white; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-weight: bold; margin: 20px 0; }}
+            .footer {{ background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #eee; }}
+            .warning {{ font-size: 12px; color: #999; margin-top: 20px; }}
         </style>
     </head>
     <body>
@@ -118,18 +95,15 @@ async def send_verification_email(email: str, token: str):
     </body>
     </html>
     """
-    
-    msg = EmailMessage()
-    msg.set_content(f"Для подтверждения email перейдите по ссылке: {verify_url}")
-    msg.add_alternative(html_content, subtype='html')
-    msg['Subject'] = 'Подтверждение email'
-    msg['From'] = f"{FROM_NAME} <{FROM_EMAIL}>"
-    msg['To'] = email
-    
-    try:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.send_message(msg)
-        print(f"✅ Verification email sent to {email}")
-    except Exception as e:
-        print(f"❌ Failed to send email: {e}")
+
+    text_content = f"Для подтверждения email перейдите по ссылке: {verify_url}"
+
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(
+        None,
+        _send_email_sync,
+        email,
+        "Подтверждение email",
+        text_content,
+        html_content,
+    )

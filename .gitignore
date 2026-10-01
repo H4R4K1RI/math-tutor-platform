@@ -1,28 +1,49 @@
+# Env
+.env
+.env.*
+*.env
+!*.env.example
+
+# Python
 __pycache__/
 *.py[cod]
 *.so
 .Python
 venv/
 env/
-.env
+.pytest_cache/
+*.egg-info/
 
+# Node
+node_modules/
+dist/
+dist-ssr
+*.local
+
+# Logs
+logs/
+*.log
+nohup.out
+
+# Docker
+postgres_data/
+
+# IDE
 .vscode/
 .idea/
 
-postgres_data/
+# OS
+.DS_Store
 
-*.log*.py.save
-nohup.out
+# Build
 *.tsbuildinfo
-backend/uploads/
-*.save
-*.tsbuildinfo
-vite.config.d.ts
 vite.config.js
-*.save.*
-*.tsx.save.*
-setSidebarOpen*
-{
-frontend/Assignments.tsx
-frontend/ReviewSubmissions.tsx
-frontend/public/icons.svg
+vite.config.d.ts
+
+# Uploads
+backend/uploads/
+uploads/
+
+# Migrations (опционально, обычно коммитятся)
+# backend/migrations/versions/
+
