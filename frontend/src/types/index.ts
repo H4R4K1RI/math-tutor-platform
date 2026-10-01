@@ -30,9 +30,3 @@ export interface Submission {
   submitted_at: string;
   updated_at: string | null;
 }
-
-export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}

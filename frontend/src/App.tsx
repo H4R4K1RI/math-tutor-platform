@@ -24,6 +24,16 @@ import TakeTestPage from './pages/TakeTestPage';
 import TestResultPage from './pages/TestResultPage';
 import TestResultsTeacherPage from './pages/TestResultsTeacherPage';
 import MyTestsPage from './pages/MyTestsPage';
+import TestStudentResultPage from './pages/TestStudentResultPage';
+import VerifyEmail from './pages/VerifyEmail';
+import FinancePage from './pages/FinancePage';
+import PaymentHistory from './pages/PaymentHistory';
+import CalendarPage from './pages/CalendarPage';
+import LessonRequestsPage from './pages/LessonRequestsPage';
+import MaterialsPage from './pages/MaterialsPage';
+import TutoringRequestsPage from './pages/TutoringRequestsPage';
+import JoinByInvite from './pages/JoinByInvite';
+import { Toaster } from 'react-hot-toast';
 
 // Ленивая загрузка страниц
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.default })));
@@ -90,6 +100,15 @@ function AppRoutes() {
         <Route path="/test/:id" element={<LazyRoute><TakeTestPage /></LazyRoute>} />
         <Route path="/test/:id/result" element={<LazyRoute><TestResultPage /></LazyRoute>} />
         <Route path="/tests/:id/results" element={<TeacherRoute><LazyRoute><TestResultsTeacherPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/tests/:testId/results/:userId" element={<TeacherRoute><LazyRoute><TestStudentResultPage /></LazyRoute></TeacherRoute>} />
+        <Route path="/verify-email" element={<LazyRoute><VerifyEmail /></LazyRoute>} />
+        <Route path="/finance" element={<TeacherRoute><LazyRoute><FinancePage /></LazyRoute></TeacherRoute>} />
+        <Route path="/payments" element={<ProtectedRoute><LazyRoute><PaymentHistory /></LazyRoute></ProtectedRoute>} />
+        <Route path="/calendar" element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/requests" element={<ProtectedRoute><LazyRoute><LessonRequestsPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/materials" element={<ProtectedRoute><LazyRoute><MaterialsPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/tutoring-requests" element={<ProtectedRoute><LazyRoute><TutoringRequestsPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/join" element={<LazyRoute><JoinByInvite /></LazyRoute>} />
       </Routes>
     </AnimatePresence>
   );
@@ -115,21 +134,21 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col">
       {!isChatPage && (
-        <Header 
-          darkMode={darkMode} 
-          setDarkMode={setDarkMode} 
-          onMenuClick={() => setSidebarOpen(true)} 
+        <Header
+          darkMode={darkMode}
+          setDarkMode={setDarkMode}
+          onMenuClick={() => setSidebarOpen(true)}
         />
       )}
-      
+
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      
+
       <main className={`flex-1 transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'ml-72' : ''}`}>
         <div className={`${isChatPage ? 'p-0' : 'p-6'}`}>
           <AppRoutes />
         </div>
       </main>
-      
+
       {!isChatPage && <Footer />}
     </div>
   );
@@ -145,6 +164,7 @@ function App() {
             <ChatProvider>
               <GlobalNotification />
               <AppContent />
+              <Toaster position="top-right" />
             </ChatProvider>
           </AuthProvider>
         } />

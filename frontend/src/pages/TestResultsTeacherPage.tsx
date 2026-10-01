@@ -105,7 +105,7 @@ const TestResultsTeacherPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Таблица результатов */}
+        {/* Таблица результатов — кликабельные строки */}
         <div className="bg-dark-card rounded-xl border border-white/10 overflow-hidden">
           <div className="p-4 border-b border-white/10">
             <h2 className="text-xl font-semibold text-white">Результаты учеников</h2>
@@ -122,7 +122,11 @@ const TestResultsTeacherPage: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-white/10">
                 {data.results.map((result) => (
-                  <tr key={result.user_test_id} className="hover:bg-white/5 transition">
+                  <tr 
+                    key={result.user_test_id} 
+                    onClick={() => navigate(`/tests/${data.test.id}/results/${result.student_id}`)}
+                    className="hover:bg-white/5 transition cursor-pointer"
+                  >
                     <td className="px-4 py-3 text-white">
                       <div className="flex items-center gap-2">
                         <FiUser size={14} className="text-gray-400" />

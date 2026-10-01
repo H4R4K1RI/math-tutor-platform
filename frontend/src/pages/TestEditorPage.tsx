@@ -3,11 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import AnimatedPage from '../components/AnimatedPage';
-import { FiPlus, FiTrash2, FiMove, FiCopy } from 'react-icons/fi';
+import { FiPlus, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 interface Question {
-  id?: number;
   text: string;
   type: string;
   points: number;
@@ -33,7 +32,7 @@ const TestEditorPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [groups, setGroups] = useState<{ id: number; name: string }[]>([]);
-  const [students, setStudents] = useState<{ id: number; full_name: string }[]>([]);
+  const [students, setStudents] = useState<{ id: number; name: string }[]>([]);
   
   const [testData, setTestData] = useState<TestData>({
     title: '',
@@ -47,26 +46,28 @@ const TestEditorPage: React.FC = () => {
 
   useEffect(() => {
     if (!isTeacher) return;
-    fetchGroups();
-    fetchStudents();
+    Promise.all([fetchGroups(), fetchStudents()]).catch(err => console.error('Error loading data:', err));
     if (id) fetchTest();
   }, [id, isTeacher]);
 
   const fetchGroups = async () => {
     try {
       const response = await apiClient.get('/groups');
-      setGroups(response.data);
+      setGroups(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching groups:', error);
+      setGroups([]);
     }
   };
 
   const fetchStudents = async () => {
     try {
       const response = await apiClient.get('/students');
-      setStudents(response.data);
+      const studentsData = response.data.items || response.data;
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
     } catch (error) {
       console.error('Error fetching students:', error);
+      setStudents([]);
     }
   };
 
@@ -83,17 +84,16 @@ const TestEditorPage: React.FC = () => {
         group_id: data.group_id,
         student_id: data.student_id,
         questions: data.questions.map((q: any, idx: number) => ({
-          id: q.id,
           text: q.text,
           type: q.type,
           points: q.points,
           order: idx,
           correct_answer: q.correct_answer,
-          options: q.options?.map((opt: any, optIdx: number) => ({
+          options: (q.options || []).map((opt: any, optIdx: number) => ({
             text: opt.text,
-            is_correct: opt.is_correct,
+            is_correct: opt.is_correct || false,
             order: optIdx
-          })) || []
+          }))
         }))
       });
     } catch (error) {
@@ -162,105 +162,85 @@ const TestEditorPage: React.FC = () => {
   };
 
   const saveTest = async () => {
-  if (!testData.title.trim()) {
-    toast.error('Введите название теста');
-    return;
-  }
-  if (testData.questions.length === 0) {
-    toast.error('Добавьте хотя бы один вопрос');
-    return;
-  }
+    console.log('🔵 saveTest вызвана');
+    
+    if (!testData.title.trim()) {
+      toast.error('Введите название теста');
+      return;
+    }
+    if (testData.questions.length === 0) {
+      toast.error('Добавьте хотя бы один вопрос');
+      return;
+    }
 
-  setSaving(true);
-  try {
-    // Очищаем и подготавливаем данные
-    const cleanedData: any = {
-      title: testData.title.trim(),
-      description: testData.description?.trim() || null,
-      time_limit: testData.time_limit ? Number(testData.time_limit) : null,
-      passing_score: Number(testData.passing_score) || 70,
-      group_id: testData.group_id ? Number(testData.group_id) : null,
-      student_id: testData.student_id ? Number(testData.student_id) : null,
-      shuffle_questions: false,
-      show_results_immediately: true,
-      attempts: 1,
-      questions: []
-    };
-
-    // Обрабатываем вопросы
-    for (const q of testData.questions) {
-      if (!q.text.trim()) {
-        toast.error('У всех вопросов должен быть текст');
-        setSaving(false);
-        return;
-      }
-
-      const questionData: any = {
-        text: q.text.trim(),
-        type: q.type,
-        points: Number(q.points) || 1,
-        order: q.order,
+    setSaving(true);
+    try {
+      const cleanedData: any = {
+        title: testData.title.trim(),
+        description: testData.description?.trim() || null,
+        time_limit: testData.time_limit ? Number(testData.time_limit) : null,
+        passing_score: Number(testData.passing_score) || 70,
+        group_id: testData.group_id ? Number(testData.group_id) : null,
+        student_id: testData.student_id ? Number(testData.student_id) : null,
+        questions: []
       };
 
-      if (q.type === 'open' || q.type === 'number') {
-        questionData.correct_answer = q.correct_answer?.trim() || '';
-        questionData.options = []; // Не отправляем options для этих типов
-      } else {
-        // Для single/multiple — проверяем варианты
-        const validOptions = q.options.filter(opt => opt.text.trim());
-        if (validOptions.length < 2) {
-          toast.error(`Для вопроса "${q.text}" нужно минимум 2 варианта ответа`);
+      for (const q of testData.questions) {
+        if (!q.text.trim()) {
+          toast.error('У всех вопросов должен быть текст');
           setSaving(false);
           return;
         }
-        // Проверяем, есть ли правильный вариант
-        const hasCorrect = validOptions.some(opt => opt.is_correct);
-        if (!hasCorrect) {
-          toast.error(`Для вопроса "${q.text}" нужно отметить правильный вариант`);
-          setSaving(false);
-          return;
+
+        const questionData: any = {
+          text: q.text.trim(),
+          type: q.type,
+          points: Number(q.points) || 1,
+          order: q.order,
+        };
+
+        if (q.type === 'open' || q.type === 'number') {
+          questionData.correct_answer = q.correct_answer?.trim() || '';
+          questionData.options = [];
+        } else {
+          const validOptions = q.options.filter(opt => opt.text.trim());
+          if (validOptions.length < 2) {
+            toast.error(`Для вопроса "${q.text}" нужно минимум 2 варианта ответа`);
+            setSaving(false);
+            return;
+          }
+          const hasCorrect = validOptions.some(opt => opt.is_correct);
+          if (!hasCorrect) {
+            toast.error(`Для вопроса "${q.text}" нужно отметить правильный вариант`);
+            setSaving(false);
+            return;
+          }
+          questionData.options = validOptions.map((opt, idx) => ({
+            text: opt.text.trim(),
+            is_correct: opt.is_correct,
+            order: idx
+          }));
         }
-        questionData.options = validOptions.map((opt, idx) => ({
-          text: opt.text.trim(),
-          is_correct: opt.is_correct,
-          order: idx
-        }));
+        cleanedData.questions.push(questionData);
       }
 
-      cleanedData.questions.push(questionData);
-    }
+      console.log('Отправляемые данные:', cleanedData);
 
-    console.log('Sending cleaned data:', cleanedData);
-
-    if (id) {
-      await apiClient.put(`/tests/${id}`, cleanedData);
-      toast.success('Тест обновлён');
-    } else {
-      await apiClient.post('/tests', cleanedData);
-      toast.success('Тест создан');
-    }
-    navigate('/tests');
-  } catch (error: any) {
-    console.error('Error saving test:', error);
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      if (error.response.data.detail) {
-        if (Array.isArray(error.response.data.detail)) {
-          error.response.data.detail.forEach((err: any) => {
-            console.error('Validation error:', err);
-          });
-        }
-        toast.error(`Ошибка: ${JSON.stringify(error.response.data.detail)}`);
+      if (id) {
+        await apiClient.put(`/tests/${id}`, cleanedData);
       } else {
-        toast.error(`Ошибка: ${error.response.data.message || 'Некорректные данные'}`);
+        await apiClient.post('/tests', cleanedData);
       }
-    } else {
-      toast.error('Ошибка при сохранении');
+
+      toast.success(id ? 'Тест обновлён' : 'Тест создан');
+      navigate('/tests');
+    } catch (error: any) {
+      console.error('Save error:', error);
+      toast.error(error.response?.data?.detail || 'Ошибка при сохранении');
+    } finally {
+      setSaving(false);
     }
-  } finally {
-    setSaving(false);
-  }
-};
+  };
 
   if (!isTeacher) {
     return <div className="text-center py-20 text-white">Доступ только для учителей</div>;
@@ -281,6 +261,7 @@ const TestEditorPage: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-white">{id ? 'Редактировать тест' : 'Создать тест'}</h1>
           <button
+            type="button"
             onClick={saveTest}
             disabled={saving}
             className="px-6 py-2 rounded-lg bg-accent hover:bg-accent/80 text-white font-medium disabled:opacity-50"
@@ -289,7 +270,6 @@ const TestEditorPage: React.FC = () => {
           </button>
         </div>
 
-        {/* Основная информация */}
         <div className="bg-dark-card rounded-xl p-6 border border-white/10 mb-6">
           <h2 className="text-xl font-semibold text-white mb-4">Основная информация</h2>
           <div className="space-y-4">
@@ -341,44 +321,40 @@ const TestEditorPage: React.FC = () => {
               <select
                 value={testData.group_id ? `group_${testData.group_id}` : (testData.student_id ? `student_${testData.student_id}` : 'all')}
                 onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'all') {
+                  const val = e.target.value;
+                  if (val === 'all') {
                     setTestData({ ...testData, group_id: null, student_id: null });
-                    } else if (val.startsWith('group_')) {
+                  } else if (val.startsWith('group_')) {
                     setTestData({ ...testData, group_id: parseInt(val.replace('group_', '')), student_id: null });
-                    } else if (val.startsWith('student_')) {
+                  } else if (val.startsWith('student_')) {
                     setTestData({ ...testData, student_id: parseInt(val.replace('student_', '')), group_id: null });
-                    }
+                  }
                 }}
                 className="w-full px-3 py-2 rounded-lg bg-gray-800 border border-gray-700 text-white"
-                >
+              >
                 <option value="all">📚 Для всех учеников</option>
                 {groups.length > 0 && (
-                    <optgroup label="👥 Группы">
+                  <optgroup label="👥 Группы">
                     {groups.map(g => (
-                        <option key={`group_${g.id}`} value={`group_${g.id}`}>
-                        📁 {g.name}
-                        </option>
+                      <option key={`group_${g.id}`} value={`group_${g.id}`}>📁 {g.name}</option>
                     ))}
-                    </optgroup>
+                  </optgroup>
                 )}
                 <optgroup label="👤 Конкретные ученики">
-                    {students.map(s => (
-                    <option key={`student_${s.id}`} value={`student_${s.id}`}>
-                        👤 {s.full_name}
-                    </option>
-                    ))}
+                  {Array.isArray(students) && students.map(s => (
+                    <option key={`student_${s.id}`} value={`student_${s.id}`}>👤 {s.name}</option>
+                  ))}
                 </optgroup>
-                </select>
+              </select>
             </div>
           </div>
         </div>
 
-        {/* Вопросы */}
         <div className="bg-dark-card rounded-xl p-6 border border-white/10">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-white">Вопросы</h2>
             <button
+              type="button"
               onClick={addQuestion}
               className="px-3 py-1 rounded-lg bg-accent/20 text-accent hover:bg-accent/30 transition flex items-center gap-1 text-sm"
             >
@@ -399,6 +375,7 @@ const TestEditorPage: React.FC = () => {
                   <div className="flex justify-between items-start mb-3">
                     <h3 className="text-white font-medium">Вопрос {qIdx + 1}</h3>
                     <button
+                      type="button"
                       onClick={() => removeQuestion(qIdx)}
                       className="text-gray-400 hover:text-red-400 transition"
                     >
@@ -447,7 +424,6 @@ const TestEditorPage: React.FC = () => {
                               checked={opt.is_correct}
                               onChange={() => {
                                 if (question.type === 'single') {
-                                  // Для одиночного выбора — снимаем все остальные
                                   const newOptions = question.options.map((o, i) => ({
                                     ...o,
                                     is_correct: i === optIdx
@@ -467,6 +443,7 @@ const TestEditorPage: React.FC = () => {
                               placeholder="Вариант ответа"
                             />
                             <button
+                              type="button"
                               onClick={() => removeOption(qIdx, optIdx)}
                               className="text-gray-400 hover:text-red-400 transition"
                             >
@@ -475,6 +452,7 @@ const TestEditorPage: React.FC = () => {
                           </div>
                         ))}
                         <button
+                          type="button"
                           onClick={() => addOption(qIdx)}
                           className="text-sm text-accent hover:text-accent/80 transition flex items-center gap-1"
                         >

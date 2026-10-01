@@ -64,7 +64,7 @@ const ReviewSubmissions: React.FC = () => {
     return assignment?.title || `Задание #${assignmentId}`;
   };
 
-  const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
+  const SERVER_URL = '';  // относительный путь — идёт через Nginx
 
   if (loading) return <div className="text-center py-10">Загрузка...</div>;
 

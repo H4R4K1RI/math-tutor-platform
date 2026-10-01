@@ -33,7 +33,7 @@ const ChatRoom: React.FC = () => {
   const [editText, setEditText] = useState('');
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(window.innerHeight);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const originalTitle = useRef(document.title);
 
@@ -106,12 +106,10 @@ const ChatRoom: React.FC = () => {
   const fetchMessages = async () => {
     if (!chatId) return;
     try {
-      console.log(`📥 Fetching messages for chat ${chatId}`);
       const response = await apiClient.get(`/chats/${chatId}/messages`);
-      console.log('📥 Messages loaded:', response.data.length);
       setMessages(response.data);
       if (socket?.connected) {
-        socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+        socket.emit('mark_messages_read', { chat_id: chatId});
       }
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -126,9 +124,8 @@ const ChatRoom: React.FC = () => {
   const fetchChatInfo = async () => {
     if (!chatId) return;
     try {
-      const response = await apiClient.get('/chats');
-      const chat = response.data.find((c: any) => c.id === chatId);
-      if (chat) setOtherUserName(chat.other_user_name);
+      const response = await apiClient.get(`/chats/${chatId}`);
+      setOtherUserName(response.data.other_user_name);
     } catch (error) {
       console.error('Error fetching chat info:', error);
     }
@@ -139,18 +136,18 @@ const ChatRoom: React.FC = () => {
     if (!chatId || !socket) return;
 
     if (socket.connected) {
-      console.log('🟢 Socket connected, joining chat', chatId);
+      
       socket.emit('join_chat', { chat_id: chatId });
     } else {
-      console.log('🟡 Socket not connected, waiting for connect...');
+      
       socket.once('connect', () => {
-        console.log('🔵 Socket connected, joining chat', chatId);
+        
         socket?.emit('join_chat', { chat_id: chatId });
       });
     }
 
     const handleNewMessage = (data: any) => {
-      console.log('📩 New message in room:', data);
+     
       if (data.chat_id === chatId) {
         // Проверяем, нет ли уже такого сообщения (избегаем дублей)
         setMessages(prev => {
@@ -175,7 +172,7 @@ const ChatRoom: React.FC = () => {
 
           // Отмечаем сообщения как прочитанные
           if (socket?.connected) {
-            socket.emit('mark_messages_read', { chat_id: chatId, user_id: user?.id });
+            socket.emit('mark_messages_read', { chat_id: chatId });
           }
         }
       }
@@ -249,19 +246,18 @@ const ChatRoom: React.FC = () => {
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !chatId || !user?.id) return;
-    
+    if (!newMessage.trim() || !chatId) return;
+
     if (!socket?.connected) {
       toast.error('Нет соединения с сервером');
       return;
     }
-    
-    socket.emit('send_message', { 
-      chat_id: chatId, 
-      sender_id: user.id, 
-      message: newMessage.trim()
+
+    socket.emit('send_message', {
+      chat_id: chatId,
+      message: newMessage.trim(),
     });
-    
+
     setNewMessage('');
   };
 

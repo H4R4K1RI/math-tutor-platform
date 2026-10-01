@@ -23,7 +23,6 @@ const GlobalNotification: React.FC = () => {
         const arrayBuffer = await response.arrayBuffer();
         audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        console.log('✅ Sound loaded');
       } catch (error) {
         console.error('Failed to load sound:', error);
       }
@@ -47,7 +46,6 @@ const GlobalNotification: React.FC = () => {
       source.buffer = audioBuffer;
       source.connect(audioContext.destination);
       source.start();
-      console.log('🔔 Sound played');
     } catch (error) {
       console.error('Play sound error:', error);
     }
@@ -77,25 +75,43 @@ const GlobalNotification: React.FC = () => {
       
       // Если открыт этот чат — не играем звук
       if (activeChatId === data.chat_id) {
-        console.log('🔇 Sound suppressed: user in this chat');
         return;
       }
       
-      console.log('🔔 Playing notification');
       playSound();
       
-      // Мигание заголовка
+      // Мигание заголовка (только если вкладка неактивна)
       if (document.hidden) {
         let count = 0;
-        const interval = setInterval(() => {
+        let intervalId: ReturnType<typeof setInterval> | null = null;
+
+        const stopFlashing = () => {
+          if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+          document.title = originalTitle.current;
+          document.removeEventListener('visibilitychange', onVisibilityChange);
+        };
+
+        const onVisibilityChange = () => {
+          if (!document.hidden) {
+            stopFlashing();
+          }
+        };
+
+        intervalId = setInterval(() => {
           document.title = count % 2 === 0 ? '💬 Новое сообщение!' : originalTitle.current;
           count++;
           if (count > 6) {
-            clearInterval(interval);
-            document.title = originalTitle.current;
+            stopFlashing();
           }
         }, 500);
-        setTimeout(() => clearInterval(interval), 4000);
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        // Страховка: остановить через 10 секунд
+        setTimeout(stopFlashing, 10000);
       }
     };
 

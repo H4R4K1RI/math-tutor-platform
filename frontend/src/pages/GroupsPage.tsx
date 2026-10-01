@@ -47,9 +47,10 @@ const GroupsPage: React.FC = () => {
   const fetchGroups = async () => {
     try {
       const response = await apiClient.get('/groups');
-      setGroups(response.data);
+      setGroups(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching groups:', error);
+      setGroups([]);
     } finally {
       setLoading(false);
     }
@@ -58,12 +59,13 @@ const GroupsPage: React.FC = () => {
   const fetchStudents = async () => {
     try {
       const response = await apiClient.get('/students');
-      setStudents(response.data);
+      const studentsData = response.data.items || response.data;
+      setStudents(Array.isArray(studentsData) ? studentsData : []);
     } catch (error) {
       console.error('Error fetching students:', error);
+      setStudents([]);
     }
   };
-
   const fetchGroupStudents = async (groupId: number) => {
     try {
       const response = await apiClient.get(`/groups/${groupId}/students`);

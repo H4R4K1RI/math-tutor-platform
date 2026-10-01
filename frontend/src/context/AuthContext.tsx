@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { User } from '../types';
 import { initSocket, connectSocket, disconnectSocket, socket } from '../socket';
@@ -6,7 +7,7 @@ import { initSocket, connectSocket, disconnectSocket, socket } from '../socket';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, full_name: string, password: string) => Promise<void>;
+  register: (email: string, full_name: string, password: string, role: string, invite_code?: string) => Promise<void>;
   logout: () => Promise<void>;
   isTeacher: boolean;
   isLoading: boolean;
@@ -25,13 +26,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const isLoggingOut = React.useRef(false);
+  const navigate = useNavigate();
 
   const fetchUser = async () => {
     if (isLoggingOut.current) {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       const response = await apiClient.get('/auth/me');
       setUser(response.data);
@@ -58,13 +60,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchUser();
   }, []);
 
+  // Слушаем событие "auth:expired" от axios-интерцептора
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setUser(null);
+      disconnectSocket();
+      navigate('/login', { replace: true });
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired);
+    };
+  }, [navigate]);
+
   const login = async (email: string, password: string) => {
+    isLoggingOut.current = false;
     await apiClient.post('/auth/login', { email, password });
     await fetchUser();
   };
 
-  const register = async (email: string, full_name: string, password: string) => {
-    await apiClient.post('/auth/register', { email, full_name, password });
+  const register = async (
+    email: string,
+    full_name: string,
+    password: string,
+    role: string,
+    invite_code?: string
+  ) => {
+    await apiClient.post('/auth/register', {
+      email,
+      full_name,
+      password,
+      role,
+      invite_code: invite_code || null,
+    });
   };
 
   const logout = async () => {

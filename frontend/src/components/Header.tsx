@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode, onMenuClick }) =
               <FiMenu size={20} className="text-gray-700 dark:text-gray-300" />
             </button>
           )}
-          <Link to="/" className="text-2xl font-bold text-primary tracking-tight">
+          <Link to={user ? '/dashboard' : '/'} className="text-2xl font-bold text-primary tracking-tight">
             📐 Math<span className="text-accent">Tutor</span>
           </Link>
         </div>

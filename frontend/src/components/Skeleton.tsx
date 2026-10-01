@@ -5,7 +5,11 @@ interface SkeletonProps {
 }
 
 const Skeleton: React.FC<SkeletonProps> = ({ className = '' }) => {
-  return <div className={`skeleton ${className}`} style={{ height: '20px', width: '100%' }} />;
+  return (
+    <div
+      className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`}
+    />
+  );
 };
 
 export const SkeletonCard: React.FC = () => {
