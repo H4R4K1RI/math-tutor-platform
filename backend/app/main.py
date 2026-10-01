@@ -1,18 +1,28 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import asyncio
 import os
-from app.api import auth, assignments, submissions, uploads, users, chats, students, invitations, groups, tests
+
+from app.api import (
+    auth, assignments, submissions, uploads, users, chats,
+    students, invitations, groups, tests, payments, lessons,
+    reviews, lesson_requests, materials, tutoring_requests,
+)
 from app.socket_manager import socket_app, sio
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
+from app.core.logger import logger
+from app.services.reminder_scheduler import run_scheduler
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
-
+# Отключаем rate limit в тестах
+if os.getenv("TESTING") == "1":
+    limiter = Limiter(key_func=get_remote_address, enabled=False)
+else:
+    limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
     title="Math Tutor Platform",
@@ -20,36 +30,52 @@ app = FastAPI(
     version="0.7.0",
     swagger_ui_parameters={
         "persistAuthorization": True,
-    }
+    },
 )
 
-from app.db.database import init_db
+# Глобальный флаг для задачи планировщика
+scheduler_task = None
+
 
 @app.on_event("startup")
 async def startup():
-    await init_db()
+    global scheduler_task
+    logger.info("Application startup complete")
+
+    scheduler_task = asyncio.create_task(run_scheduler())
+    logger.info("Reminder scheduler task created")
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    global scheduler_task
+    if scheduler_task:
+        scheduler_task.cancel()
+        try:
+            await scheduler_task
+        except asyncio.CancelledError:
+            pass
+        logger.info("Reminder scheduler task cancelled")
+
 
 app.state.limiter = limiter
 
-# Кастомный обработчик rate limit
+
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=429,
         content={
             "detail": "Слишком много попыток входа. Пожалуйста, подождите 1 минуту перед следующей попыткой."
-        }
+        },
     )
 
-# Настройка CORS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://90.156.170.9:5173",
         "http://localhost:5173",
-        "http://tutor-platform.ru:5173",
-        "http://www.tutor-platform.ru:5173",
-        "https://tutor-platform.ru",
+        "http://127.0.0.1:5173",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -58,8 +84,9 @@ app.add_middleware(
 
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["90.156.170.9", "localhost", "127.0.0.1", "tutor-platform.ru", "www.tutor-platform.ru"]
+    allowed_hosts=["*"],
 )
+
 
 @app.middleware("http")
 async def add_security_headers(request, call_next):
@@ -68,8 +95,6 @@ async def add_security_headers(request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
-    # CSP пока отключаем для простоты, но можно настроить позже
-    # response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response
 
 
@@ -89,23 +114,23 @@ app.include_router(students.router, prefix="/api", tags=["students"])
 app.include_router(invitations.router, prefix="/api", tags=["invitations"])
 app.include_router(groups.router, prefix="/api", tags=["groups"])
 app.include_router(tests.router, prefix="/api", tags=["tests"])
+app.include_router(payments.router, prefix="/api", tags=["payments"])
+app.include_router(lessons.router, prefix="/api", tags=["lessons"])
+app.include_router(reviews.router, prefix="/api", tags=["reviews"])
+app.include_router(lesson_requests.router, prefix="/api", tags=["lesson-requests"])
+app.include_router(materials.router, prefix="/api", tags=["materials"])
+app.include_router(tutoring_requests.router, prefix="/api", tags=["tutoring-requests"])
+
 
 @app.get("/")
 async def root():
     return {"message": "Math Tutor API is running", "status": "ok"}
 
+
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
 
+
 # Монтируем Socket.IO на /socket.io/
 app.mount("/socket.io/", socket_app)
-
-# Socket.IO события
-@sio.event
-async def connect(sid, environ):
-    print(f"Client connected: {sid}")
-
-@sio.event
-async def disconnect(sid):
-    print(f"Client disconnected: {sid}")
