@@ -1,32 +1,36 @@
 import os
+from pathlib import Path
 
+# 1. TESTING флаг — всегда
 os.environ["TESTING"] = "1"
-os.environ["DATABASE_URL"] = (
-    "postgresql+asyncpg://postgres:Bohirjon0102@localhost:5432/math_tutor_test"
-)
-os.environ["SECRET_KEY"] = "test-secret-key-for-testing-only-32-characters-long"
-os.environ["ALGORITHM"] = "HS256"
-os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"
-os.environ["REFRESH_TOKEN_EXPIRE_DAYS"] = "7"
-os.environ["COOKIE_SECURE"] = "False"
-os.environ["FRONTEND_URL"] = "http://localhost:5173"
-os.environ["DEBUG"] = "False"
 
-import pytest  # noqa: E402
-import pytest_asyncio  # noqa: E402
-from httpx import ASGITransport, AsyncClient  # noqa: E402
-from sqlalchemy.ext.asyncio import (  # noqa: E402
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+# 2. Локально (если есть .env.test) — ставим дефолты с setdefault.
+#    В CI (.env.test нет) — оставляем DATABASE_URL из workflow.
+_env_test = Path(__file__).parent.parent / ".env.test"
+if _env_test.exists():
+    os.environ.setdefault(
+        "DATABASE_URL",
+        "postgresql+asyncpg://postgres:Bohirjon0102@localhost:5432/math_tutor_test"
+    )
+    os.environ.setdefault("SECRET_KEY", "test-secret-key-for-testing-only-32-characters-long")
+    os.environ.setdefault("ALGORITHM", "HS256")
+    os.environ.setdefault("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+    os.environ.setdefault("REFRESH_TOKEN_EXPIRE_DAYS", "7")
+    os.environ.setdefault("COOKIE_SECURE", "False")
+    os.environ.setdefault("FRONTEND_URL", "http://localhost:5173")
+    os.environ.setdefault("DEBUG", "False")
 
-from app.core.config import settings  # noqa: E402
-from app.core.security import get_password_hash  # noqa: E402
-from app.db.database import Base, get_db  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models.user import User  # noqa: E402
+# 3. Остальные импорты
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.config import settings
+from app.db.database import Base, get_db
+from app.main import app
+from app.models.user import User
+from app.core.security import get_password_hash
 
 # ==================== ENGINE / SESSION ====================
 
