@@ -1,11 +1,9 @@
-
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: math_tutor_db
+  db:
+    image: postgres:16
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: math_tutor
     ports:
       - "5432:5432"
@@ -16,6 +14,35 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD}@db:5432/math_tutor
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production-please-32chars}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      COOKIE_SECURE: "false"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./uploads:/app/uploads
+      - ./backend/migrations:/app/migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
