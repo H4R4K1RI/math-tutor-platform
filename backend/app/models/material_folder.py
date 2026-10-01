@@ -1,10 +1,10 @@
-from app.db.database import Base
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.sql import func
+from app.db.database import Base
 
 
-class Group(Base):
-    __tablename__ = "groups"
+class MaterialFolder(Base):
+    __tablename__ = "material_folders"
 
     id = Column(Integer, primary_key=True, index=True)
     teacher_id = Column(
