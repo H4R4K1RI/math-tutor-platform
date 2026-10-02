@@ -54,8 +54,8 @@ async def test_accept_invitation(
     client: AsyncClient, teacher_client, db_session
 ):
     """Ученик принимает инвайт → создаётся чат."""
-    from app.core.security import get_password_hash
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.auth.models import User
 
     # 1. Учитель генерирует инвайт
     gen_response = await teacher_client.post("/api/invitations/generate")
@@ -92,8 +92,8 @@ async def test_accept_invitation_twice(
     client: AsyncClient, teacher_client, db_session
 ):
     """Повторное принятие инвайта → 400."""
-    from app.core.security import get_password_hash
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.auth.models import User
 
     gen_response = await teacher_client.post("/api/invitations/generate")
     code = gen_response.json()["code"]

@@ -35,8 +35,8 @@ async def test_add_payment_to_foreign_student(
     teacher_client, db_session
 ):
     """Платёж чужому ученику → 403."""
-    from app.core.security import get_password_hash
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.auth.models import User
 
     foreign_student = User(
         email="foreign@test.com",

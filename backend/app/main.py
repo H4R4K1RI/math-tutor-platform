@@ -1,28 +1,43 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 import asyncio
 import os
 
-from app.api import (
-    auth, assignments, submissions, uploads, users, chats,
-    students, invitations, groups, tests, payments, lessons,
-    reviews, lesson_requests, materials, tutoring_requests,
-)
-from app.socket_manager import socket_app, sio
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
-from app.core.logger import logger
-from app.services.reminder_scheduler import run_scheduler
+from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
-# Отключаем rate limit в тестах
+from app.api import uploads
+from app.assignments.router import router as assignments_router
+from app.auth.router import router as auth_router
+from app.chat.router import router as chat_router
+from app.chat.socket import socket_app
+from app.groups.router import router as groups_router
+from app.invitations.router import router as invitations_router
+from app.lessons.router import router as lessons_router
+from app.materials.router import router as materials_router
+from app.notifications.reminder_scheduler import run_scheduler
+from app.payments.router import router as payments_router
+from app.reviews.router import router as reviews_router
+from app.shared.logger import logger
+from app.students.router import router as students_router
+from app.tests.router import router as tests_router
+from app.tutoring_requests.router import router as tutoring_requests_router
+from app.users.router import router as users_router
+
+
+# ==================== RATE LIMITER ====================
+
 if os.getenv("TESTING") == "1":
     limiter = Limiter(key_func=get_remote_address, enabled=False)
 else:
     limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
+
+# ==================== APP ====================
 
 app = FastAPI(
     title="Math Tutor Platform",
@@ -71,6 +86,8 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
     )
 
 
+# ==================== MIDDLEWARE ====================
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -98,29 +115,32 @@ async def add_security_headers(request, call_next):
     return response
 
 
-# Статика
+# ==================== STATIC ====================
+
 static_dir = "uploads"
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-# Роутеры API
-app.include_router(auth.router, prefix="/api", tags=["authentication"])
-app.include_router(assignments.router, prefix="/api", tags=["assignments"])
-app.include_router(submissions.router, prefix="/api", tags=["submissions"])
-app.include_router(uploads.router, prefix="/api", tags=["upload"])
-app.include_router(users.router, prefix="/api", tags=["users"])
-app.include_router(chats.router, prefix="/api", tags=["chats"])
-app.include_router(students.router, prefix="/api", tags=["students"])
-app.include_router(invitations.router, prefix="/api", tags=["invitations"])
-app.include_router(groups.router, prefix="/api", tags=["groups"])
-app.include_router(tests.router, prefix="/api", tags=["tests"])
-app.include_router(payments.router, prefix="/api", tags=["payments"])
-app.include_router(lessons.router, prefix="/api", tags=["lessons"])
-app.include_router(reviews.router, prefix="/api", tags=["reviews"])
-app.include_router(lesson_requests.router, prefix="/api", tags=["lesson-requests"])
-app.include_router(materials.router, prefix="/api", tags=["materials"])
-app.include_router(tutoring_requests.router, prefix="/api", tags=["tutoring-requests"])
 
+# ==================== ROUTERS ====================
+
+app.include_router(auth_router, prefix="/api")
+app.include_router(users_router, prefix="/api")
+app.include_router(invitations_router, prefix="/api")
+app.include_router(students_router, prefix="/api")
+app.include_router(groups_router, prefix="/api")
+app.include_router(assignments_router, prefix="/api")
+app.include_router(chat_router, prefix="/api")
+app.include_router(tests_router, prefix="/api")
+app.include_router(lessons_router, prefix="/api")
+app.include_router(payments_router, prefix="/api")
+app.include_router(materials_router, prefix="/api")
+app.include_router(reviews_router, prefix="/api")
+app.include_router(tutoring_requests_router, prefix="/api")
+app.include_router(uploads.router, prefix="/api", tags=["upload"])
+
+
+# ==================== HEALTH ====================
 
 @app.get("/")
 async def root():
@@ -132,5 +152,6 @@ async def health():
     return {"status": "healthy"}
 
 
-# Монтируем Socket.IO на /socket.io/
+# ==================== SOCKET.IO ====================
+
 app.mount("/socket.io/", socket_app)

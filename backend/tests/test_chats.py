@@ -36,8 +36,8 @@ async def test_create_chat_foreign_student(
     teacher_client, db_session
 ):
     """Учитель не может создать чат с чужим учеником → 403."""
-    from app.core.security import get_password_hash
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.auth.models import User
 
     foreign = User(
         email="foreign@test.com",
@@ -105,9 +105,9 @@ async def test_get_chat_foreign(
     teacher_client, db_session, teacher_user
 ):
     """Учитель не видит чужой чат → 403."""
-    from app.core.security import get_password_hash
-    from app.models.chat import Chat
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.chat.models import Chat
+    from app.auth.models import User
 
     # Второй учитель и ученик
     teacher2 = User(
@@ -162,9 +162,9 @@ async def test_get_messages_foreign(
     student_client, db_session
 ):
     """Ученик не видит чужой чат → 403."""
-    from app.core.security import get_password_hash
-    from app.models.chat import Chat
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.chat.models import Chat
+    from app.auth.models import User
 
     teacher2 = User(
         email="teacher2@test.com",
@@ -223,9 +223,9 @@ async def test_delete_chat_foreign(
     teacher_client, db_session
 ):
     """Учитель не может удалить чужой чат → 403."""
-    from app.core.security import get_password_hash
-    from app.models.chat import Chat
-    from app.models.user import User
+    from app.shared.security import get_password_hash
+    from app.chat.models import Chat
+    from app.auth.models import User
 
     teacher2 = User(
         email="teacher2@test.com",

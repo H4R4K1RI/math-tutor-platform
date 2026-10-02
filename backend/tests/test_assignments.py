@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from httpx import AsyncClient
 
-from app.models.user import User
+from app.auth.models import User
 
 
 def _future_iso(days: int = 7) -> str:
@@ -72,11 +72,10 @@ async def test_create_assignment_for_group(
     teacher_client, teacher_user, student_user, db_session
 ):
     """Групповое задание — создаётся N заданий."""
-    from app.models.group import Group
-    from app.models.group_student import GroupStudent
+    from app.groups.models import Group, GroupStudent
 
     # 1. Создаём второго ученика
-    from app.core.security import get_password_hash
+    from app.shared.security import get_password_hash
 
     student2 = User(
         email="student2@test.com",

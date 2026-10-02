@@ -8,11 +8,32 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Импортируем настройки и Base
-from app.core.config import settings
-from app.db.database import Base
+from app.shared.config import settings
+from app.shared.db import Base
 
 # Импортируем ВСЕ модели, чтобы Alembic их видел
-from app.models import *  # noqa: F401, F403
+from app.auth.models import User  # noqa: F401
+from app.assignments.models import Assignment, Submission  # noqa: F401
+from app.chat.models import Chat, Message  # noqa: F401
+from app.groups.models import Group, GroupStudent  # noqa: F401
+from app.invitations.models import Invitation  # noqa: F401
+from app.tests.models import (  # noqa: F401
+    AnswerOption,
+    Question,
+    Test,
+    UserAnswer,
+    UserTest,
+)
+from app.payments.models import Payment, StudentBalance  # noqa: F401
+from app.lessons.models import Lesson, LessonRequest  # noqa: F401
+from app.reviews.models import Review  # noqa: F401
+from app.materials.models import (  # noqa: F401
+    FolderAccess,
+    Material,
+    MaterialFolder,
+)
+from app.tutoring_requests.models import TutoringRequest  # noqa: F401
+from app.notifications.models import SentReminder  # noqa: F401
 
 # Alembic Config object
 config = context.config
