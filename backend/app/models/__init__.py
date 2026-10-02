@@ -4,11 +4,13 @@ from app.chat.models import Chat, Message
 from app.models.invitation import Invitation
 from app.models.group import Group
 from app.models.group_student import GroupStudent
-from app.models.test import Test
-from app.models.question import Question
-from app.models.answer_option import AnswerOption
-from app.models.user_test import UserTest
-from app.models.user_answer import UserAnswer
+from app.tests.models import (
+    AnswerOption,
+    Question,
+    Test,
+    UserAnswer,
+    UserTest,
+)
 from app.models.payment import Payment, StudentBalance
 from app.models.lesson import Lesson
 from app.models.review import Review

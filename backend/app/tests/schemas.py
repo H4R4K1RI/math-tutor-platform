@@ -1,5 +1,6 @@
+from typing import List, Optional
+
 from pydantic import BaseModel, Field
-from typing import Optional, List
 
 
 class AnswerOptionCreate(BaseModel):
@@ -21,7 +22,19 @@ class TestCreate(BaseModel):
     title: str
     description: Optional[str] = None
     time_limit: Optional[int] = None
+    shuffle_questions: bool = False
+    show_results_immediately: bool = True
+    attempts: int = Field(default=1, ge=1)
     passing_score: int = Field(default=70, ge=0, le=100)
     group_id: Optional[int] = None
     student_id: Optional[int] = None
     questions: List[QuestionCreate]
+
+
+class AnswerSubmit(BaseModel):
+    question_id: int
+    answer: str
+
+
+class TestSubmit(BaseModel):
+    answers: List[AnswerSubmit]

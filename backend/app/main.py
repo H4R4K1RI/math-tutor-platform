@@ -13,9 +13,10 @@ from app.assignments.router import router as assignments_router
 from app.chat.socket import socket_app, sio
 from app.api import (
     uploads,
-    tests, payments, lessons,
+    payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
+from app.tests.router import router as tests_router
 from app.chat.router import router as chat_router
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
@@ -119,7 +120,7 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(students_router, prefix="/api")
 app.include_router(invitations_router, prefix="/api")
 app.include_router(groups_router, prefix="/api")
-app.include_router(tests.router, prefix="/api", tags=["tests"])
+app.include_router(tests_router, prefix="/api")
 app.include_router(payments.router, prefix="/api", tags=["payments"])
 app.include_router(lessons.router, prefix="/api", tags=["lessons"])
 app.include_router(reviews.router, prefix="/api", tags=["reviews"])
