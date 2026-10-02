@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import select, delete
 
 from app.shared.db import AsyncSessionLocal
-from app.models.lesson import Lesson
+from app.lessons.models import Lesson
 from app.auth.models import User
 from app.models.payment import StudentBalance
 from app.models.sent_reminder import SentReminder

@@ -7,7 +7,7 @@ from app.assignments.models import Assignment, Submission
 from app.chat.models import Chat
 from app.models.group import Group
 from app.models.group_student import GroupStudent
-from app.models.lesson import Lesson
+from app.lessons.models import Lesson
 
 
 async def get_teacher_student_ids(db: AsyncSession, teacher_id: int) -> set[int]:

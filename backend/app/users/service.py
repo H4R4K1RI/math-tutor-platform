@@ -6,7 +6,7 @@ from app.auth.models import User
 from app.auth.schemas import UserUpdate
 from app.assignments.models import Assignment
 from app.chat.models import Chat
-from app.models.lesson import Lesson
+from app.lessons.models import Lesson
 from app.models.review import Review
 
 

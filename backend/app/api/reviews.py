@@ -5,7 +5,7 @@ from typing import List
 
 from app.auth.dependencies import get_current_user
 from app.shared.db import get_db
-from app.models.lesson import Lesson
+from app.lessons.models import Lesson
 from app.models.review import Review
 from app.auth.models import User
 from app.schemas.review import ReviewCreate, ReviewResponse, TutorRatingResponse
