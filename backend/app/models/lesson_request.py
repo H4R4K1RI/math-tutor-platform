@@ -8,7 +8,7 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.sql import func
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class LessonRequest(Base):

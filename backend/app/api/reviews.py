@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.core.dependencies import get_current_user
-from app.db.database import get_db
+from app.shared.db import get_db
 from app.models.lesson import Lesson
 from app.models.review import Review
 from app.models.user import User

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.sql import func
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class MaterialFolder(Base):

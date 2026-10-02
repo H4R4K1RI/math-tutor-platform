@@ -6,21 +6,21 @@ from slowapi.util import get_remote_address
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import settings
+from app.shared.config import settings
 from app.core.dependencies import get_current_user
-from app.core.email import (
+from app.shared.email import (
     generate_verification_token,
     send_verification_email,
     verify_email_token,
 )
-from app.core.security import (
+from app.shared.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
     get_password_hash,
     verify_password,
 )
-from app.db.database import get_db
+from app.shared.db import get_db
 from app.models.chat import Chat
 from app.models.invitation import Invitation
 from app.models.user import User

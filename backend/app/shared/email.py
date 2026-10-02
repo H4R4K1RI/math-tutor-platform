@@ -2,8 +2,8 @@ import asyncio
 import smtplib
 from email.message import EmailMessage
 
-from app.core.config import settings
-from app.core.logger import logger
+from app.shared.config import settings
+from app.shared.logger import logger
 from itsdangerous import URLSafeTimedSerializer
 
 serializer = URLSafeTimedSerializer(settings.SECRET_KEY)
@@ -22,7 +22,6 @@ def verify_email_token(token: str, expiration: int = 3600) -> str | None:
 
 
 def _send_email_sync(to_email: str, subject: str, text: str, html: str) -> bool:
-    """Синхронная отправка email (выполняется в executor)."""
     SMTP_HOST = settings.SMTP_HOST or "smtp.beget.com"
     SMTP_PORT = settings.SMTP_PORT or 465
     SMTP_USER = settings.SMTP_USER
@@ -53,8 +52,6 @@ def _send_email_sync(to_email: str, subject: str, text: str, html: str) -> bool:
 
 
 async def send_verification_email(email: str, token: str):
-    """Асинхронная отправка письма с подтверждением email."""
-
     verify_url = f"https://tutor-platform.ru/api/auth/verify-email?token={token}"
 
     html_content = f"""
@@ -77,9 +74,7 @@ async def send_verification_email(email: str, token: str):
     </head>
     <body>
         <div class="container">
-            <div class="header">
-                <h1>📐 Math Tutor Platform</h1>
-            </div>
+            <div class="header"><h1>📐 Math Tutor Platform</h1></div>
             <div class="content">
                 <h2>Добро пожаловать!</h2>
                 <p>Для завершения регистрации и подтверждения вашего email, пожалуйста, нажмите на кнопку ниже:</p>

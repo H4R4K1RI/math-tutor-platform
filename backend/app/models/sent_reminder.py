@@ -7,7 +7,7 @@ from sqlalchemy import (
     UniqueConstraint,
 )
 from sqlalchemy.sql import func
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class SentReminder(Base):

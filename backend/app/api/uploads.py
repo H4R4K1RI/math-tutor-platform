@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 
 from app.core.dependencies import get_current_user
-from app.core.logger import logger
+from app.shared.logger import logger
 from app.models.user import User
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 

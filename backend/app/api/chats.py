@@ -2,8 +2,8 @@ import json
 
 from app.api.uploads import delete_file
 from app.core.dependencies import get_current_user
-from app.core.logger import logger
-from app.db.database import get_db
+from app.shared.logger import logger
+from app.shared.db import get_db
 from app.models.chat import Chat, Message
 from app.models.user import User
 from app.schemas.chat import ChatCreate

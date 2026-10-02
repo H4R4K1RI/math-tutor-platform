@@ -1,4 +1,4 @@
-from app.db.database import Base
+from app.shared.db import Base
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.sql import func
 

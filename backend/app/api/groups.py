@@ -4,7 +4,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_teacher
-from app.db.database import get_db
+from app.shared.db import get_db
 from app.models.group import Group
 from app.models.group_student import GroupStudent
 from app.models.user import User

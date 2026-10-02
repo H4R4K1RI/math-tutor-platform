@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select, delete
 
-from app.db.database import AsyncSessionLocal
+from app.shared.db import AsyncSessionLocal
 from app.models.lesson import Lesson
 from app.models.user import User
 from app.models.payment import StudentBalance
@@ -13,7 +13,7 @@ from app.services.notifications.email_service import (
     send_reminder_email,
     send_payment_reminder_email,
 )
-from app.core.logger import logger
+from app.shared.logger import logger
 
 # Таймзона для планировщика
 MSK = ZoneInfo("Europe/Moscow")

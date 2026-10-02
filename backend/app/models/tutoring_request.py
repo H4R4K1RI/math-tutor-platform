@@ -9,7 +9,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.sql import func
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class TutoringRequest(Base):

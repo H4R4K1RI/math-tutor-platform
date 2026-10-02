@@ -1,5 +1,5 @@
-from app.core.security import decode_token
-from app.db.database import get_db
+from app.shared.security import decode_token
+from app.shared.db import get_db
 from app.models.user import User
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select

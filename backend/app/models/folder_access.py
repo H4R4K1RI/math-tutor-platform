@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey, UniqueConstraint
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class FolderAccess(Base):

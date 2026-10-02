@@ -2,9 +2,9 @@ import socketio
 from sqlalchemy import func, select, update
 from jose import JWTError, jwt
 
-from app.core.config import settings
-from app.core.logger import logger
-from app.db.database import AsyncSessionLocal
+from app.shared.config import settings
+from app.shared.logger import logger
+from app.shared.db import AsyncSessionLocal
 from app.models.chat import Chat, Message
 from app.models.user import User
 

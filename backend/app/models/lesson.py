@@ -9,7 +9,7 @@ from sqlalchemy import (
     Numeric,
 )
 from sqlalchemy.sql import func
-from app.db.database import Base
+from app.shared.db import Base
 
 
 class Lesson(Base):

@@ -15,7 +15,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
-from app.core.logger import logger
+from app.shared.logger import logger
 from app.services.reminder_scheduler import run_scheduler
 
 # Отключаем rate limit в тестах

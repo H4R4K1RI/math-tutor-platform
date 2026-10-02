@@ -76,7 +76,7 @@ async def test_create_assignment_for_group(
     from app.models.group_student import GroupStudent
 
     # 1. Создаём второго ученика
-    from app.core.security import get_password_hash
+    from app.shared.security import get_password_hash
 
     student2 = User(
         email="student2@test.com",

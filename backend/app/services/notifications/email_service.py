@@ -3,8 +3,8 @@ import smtplib
 from email.message import EmailMessage
 from datetime import datetime
 
-from app.core.config import settings
-from app.core.logger import logger
+from app.shared.config import settings
+from app.shared.logger import logger
 
 
 def _send_email_sync(to_email: str, subject: str, text: str, html: str) -> bool:

@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from typing import List
 from decimal import Decimal
 
-from app.db.database import get_db
+from app.shared.db import get_db
 from app.models.user import User
 from app.models.payment import Payment, StudentBalance
 from app.schemas.payment import PaymentCreate, PaymentResponse, StudentBalanceResponse
