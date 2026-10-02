@@ -3,12 +3,11 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.models.assignment import Assignment
+from app.assignments.models import Assignment, Submission
 from app.models.chat import Chat
 from app.models.group import Group
 from app.models.group_student import GroupStudent
 from app.models.lesson import Lesson
-from app.models.submission import Submission
 
 
 async def get_teacher_student_ids(db: AsyncSession, teacher_id: int) -> set[int]:
@@ -55,6 +54,13 @@ async def get_teacher_student_ids(db: AsyncSession, teacher_id: int) -> set[int]
 
     return valid_ids
 
+
+async def get_student_teacher_ids(db: AsyncSession, student_id: int) -> set[int]:
+    """ID всех учителей, с которыми связан ученик (через чаты)."""
+    result = await db.execute(
+        select(Chat.teacher_id).where(Chat.student_id == student_id).distinct()
+    )
+    return {row[0] for row in result.all() if row[0]}
 
 class StudentsService:
     def __init__(self, db: AsyncSession):
@@ -220,3 +226,5 @@ class StudentsService:
             },
             "assignments": assignments_data,
         }
+
+    

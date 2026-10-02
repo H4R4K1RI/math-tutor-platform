@@ -301,7 +301,7 @@ async def get_or_create_chat_by_assignment(
 ):
     """Получить или создать чат, привязанный к заданию"""
 
-    from app.models.assignment import Assignment
+    from app.assignments.models import Assignment
 
     result = await db.execute(select(Assignment).where(Assignment.id == assignment_id))
     assignment = result.scalar_one_or_none()
@@ -317,9 +317,9 @@ async def get_or_create_chat_by_assignment(
         if assignment.student_id == current_user.id:
             pass
         elif assignment.student_id is None:
-            from app.api.assignments import _get_student_teacher_ids
+            from app.students.service import get_student_teacher_ids
 
-            teacher_ids = await _get_student_teacher_ids(db, current_user.id)
+            teacher_ids = await get_student_teacher_ids(db, current_user.id)
             if assignment.teacher_id not in teacher_ids:
                 raise HTTPException(status_code=403, detail="Access denied")
         else:

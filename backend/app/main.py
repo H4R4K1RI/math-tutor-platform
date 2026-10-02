@@ -9,8 +9,9 @@ from app.users.router import router as users_router
 from app.invitations.router import router as invitations_router
 from app.students.router import router as students_router
 from app.groups.router import router as groups_router
+from app.assignments.router import router as assignments_router
 from app.api import (
-    assignments, submissions, uploads, chats,
+    uploads, chats,
     tests, payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
@@ -110,8 +111,7 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Роутеры API
 app.include_router(auth_router, prefix="/api")
-app.include_router(assignments.router, prefix="/api", tags=["assignments"])
-app.include_router(submissions.router, prefix="/api", tags=["submissions"])
+app.include_router(assignments_router, prefix="/api")
 app.include_router(uploads.router, prefix="/api", tags=["upload"])
 app.include_router(users_router, prefix="/api")
 app.include_router(chats.router, prefix="/api", tags=["chats"])

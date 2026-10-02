@@ -1,6 +1,5 @@
 from app.auth.models import User
-from app.models.assignment import Assignment
-from app.models.submission import Submission
+from app.assignments.models import Assignment, Submission
 from app.models.chat import Chat, Message
 from app.models.invitation import Invitation
 from app.models.group import Group

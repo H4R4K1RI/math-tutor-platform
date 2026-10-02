@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.auth.schemas import UserUpdate
-from app.models.assignment import Assignment
+from app.assignments.models import Assignment
 from app.models.chat import Chat
 from app.models.lesson import Lesson
 from app.models.review import Review
