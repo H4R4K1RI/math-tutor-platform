@@ -11,10 +11,8 @@ from app.students.router import router as students_router
 from app.groups.router import router as groups_router
 from app.assignments.router import router as assignments_router
 from app.chat.socket import socket_app, sio
-from app.api import (
-    uploads,
-    tutoring_requests,
-)
+from app.api import uploads
+from app.tutoring_requests.router import router as tutoring_requests_router
 from app.materials.router import router as materials_router
 from app.tests.router import router as tests_router
 from app.chat.router import router as chat_router
@@ -128,7 +126,7 @@ app.include_router(payments_router, prefix="/api")
 app.include_router(lessons_router, prefix="/api")
 app.include_router(reviews_router, prefix="/api")
 app.include_router(materials_router, prefix="/api")
-app.include_router(tutoring_requests.router, prefix="/api", tags=["tutoring-requests"])
+app.include_router(tutoring_requests_router, prefix="/api")
 
 
 @app.get("/")

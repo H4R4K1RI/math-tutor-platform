@@ -1,14 +1,15 @@
 from sqlalchemy import (
     CheckConstraint,
     Column,
+    DateTime,
+    ForeignKey,
+    Index,
     Integer,
     String,
     Text,
-    ForeignKey,
-    DateTime,
-    Index,
 )
 from sqlalchemy.sql import func
+
 from app.shared.db import Base
 
 
