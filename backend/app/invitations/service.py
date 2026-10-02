@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.chat.models import Chat
-from app.models.invitation import Invitation
+from app.invitations.models import Invitation
 
 
 class InvitationsService:

@@ -1,6 +1,14 @@
-from app.shared.db import Base
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+)
 from sqlalchemy.sql import func
+
+from app.shared.db import Base
 
 
 class Invitation(Base):

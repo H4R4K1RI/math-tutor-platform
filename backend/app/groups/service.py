@@ -4,8 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.groups.schemas import GroupCreate, GroupUpdate
-from app.models.group import Group
-from app.models.group_student import GroupStudent
+from app.groups.models import Group, GroupStudent
 from app.students.service import get_teacher_student_ids
 
 

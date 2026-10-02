@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.models import User
 from app.chat.models import Chat
 from app.chat.socket import sio
-from app.models.group_student import GroupStudent
+from app.groups.models import GroupStudent
 from app.tests.models import (
     AnswerOption,
     Question,

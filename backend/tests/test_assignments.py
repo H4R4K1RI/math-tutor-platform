@@ -72,8 +72,7 @@ async def test_create_assignment_for_group(
     teacher_client, teacher_user, student_user, db_session
 ):
     """Групповое задание — создаётся N заданий."""
-    from app.models.group import Group
-    from app.models.group_student import GroupStudent
+    from app.groups.models import Group, GroupStudent
 
     # 1. Создаём второго ученика
     from app.shared.security import get_password_hash

@@ -13,7 +13,7 @@ from app.shared.security import (
     verify_password,
 )
 from app.chat.models import Chat
-from app.models.invitation import Invitation
+from app.invitations.models import Invitation
 
 
 class AuthService:
