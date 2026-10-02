@@ -7,7 +7,7 @@ from app.auth.schemas import UserUpdate
 from app.assignments.models import Assignment
 from app.chat.models import Chat
 from app.lessons.models import Lesson
-from app.models.review import Review
+from app.reviews.models import Review
 
 
 class UsersService:

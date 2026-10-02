@@ -1,13 +1,14 @@
 from sqlalchemy import (
     CheckConstraint,
     Column,
+    DateTime,
+    ForeignKey,
     Integer,
     Text,
-    ForeignKey,
-    DateTime,
     UniqueConstraint,
 )
 from sqlalchemy.sql import func
+
 from app.shared.db import Base
 
 
@@ -38,6 +39,10 @@ class Review(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        UniqueConstraint("tutor_id", "student_id", name="uq_review_tutor_student"),
-        CheckConstraint("rating >= 1 AND rating <= 5", name="ck_review_rating"),
+        UniqueConstraint(
+            "tutor_id", "student_id", name="uq_review_tutor_student"
+        ),
+        CheckConstraint(
+            "rating >= 1 AND rating <= 5", name="ck_review_rating"
+        ),
     )
