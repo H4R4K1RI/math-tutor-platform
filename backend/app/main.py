@@ -6,9 +6,10 @@ import os
 
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router
+from app.invitations.router import router as invitations_router
 from app.api import (
     assignments, submissions, uploads, chats,
-    students, invitations, groups, tests, payments, lessons,
+    students, groups, tests, payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
 from app.socket_manager import socket_app, sio
@@ -113,7 +114,7 @@ app.include_router(uploads.router, prefix="/api", tags=["upload"])
 app.include_router(users_router, prefix="/api")
 app.include_router(chats.router, prefix="/api", tags=["chats"])
 app.include_router(students.router, prefix="/api", tags=["students"])
-app.include_router(invitations.router, prefix="/api", tags=["invitations"])
+app.include_router(invitations_router, prefix="/api")
 app.include_router(groups.router, prefix="/api", tags=["groups"])
 app.include_router(tests.router, prefix="/api", tags=["tests"])
 app.include_router(payments.router, prefix="/api", tags=["payments"])
