@@ -3,9 +3,9 @@ import shutil
 import uuid
 from datetime import datetime
 
-from app.core.dependencies import get_current_user
+from app.auth.dependencies import get_current_user
 from app.shared.logger import logger
-from app.models.user import User
+from app.auth.models import User
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 router = APIRouter(prefix="/upload", tags=["upload"])

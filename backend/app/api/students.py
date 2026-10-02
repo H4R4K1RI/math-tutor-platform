@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_teacher
+from app.auth.dependencies import get_current_teacher
 from app.shared.db import get_db
 from app.models.assignment import Assignment
 from app.models.chat import Chat
@@ -10,7 +10,7 @@ from app.models.group import Group
 from app.models.group_student import GroupStudent
 from app.models.lesson import Lesson
 from app.models.submission import Submission
-from app.models.user import User
+from app.auth.models import User
 
 router = APIRouter(prefix="/students", tags=["students"])
 

@@ -4,8 +4,9 @@ from fastapi.staticfiles import StaticFiles
 import asyncio
 import os
 
+from app.auth.router import router as auth_router
 from app.api import (
-    auth, assignments, submissions, uploads, users, chats,
+    assignments, submissions, uploads, users, chats,
     students, invitations, groups, tests, payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
@@ -104,7 +105,7 @@ os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 # Роутеры API
-app.include_router(auth.router, prefix="/api", tags=["authentication"])
+app.include_router(auth_router, prefix="/api")
 app.include_router(assignments.router, prefix="/api", tags=["assignments"])
 app.include_router(submissions.router, prefix="/api", tags=["submissions"])
 app.include_router(uploads.router, prefix="/api", tags=["upload"])

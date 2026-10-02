@@ -3,11 +3,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from app.core.dependencies import get_current_user, get_current_teacher
+from app.auth.dependencies import get_current_user, get_current_teacher
 from app.shared.db import get_db
 from app.models.chat import Chat
 from app.models.tutoring_request import TutoringRequest
-from app.models.user import User
+from app.auth.models import User
 from app.schemas.tutoring_request import (
     TutoringRequestCreate,
     TutoringRequestResponse,

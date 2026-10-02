@@ -1,11 +1,11 @@
 import json
 
 from app.api.uploads import delete_file
-from app.core.dependencies import get_current_user
+from app.auth.dependencies import get_current_user
 from app.shared.logger import logger
 from app.shared.db import get_db
 from app.models.chat import Chat, Message
-from app.models.user import User
+from app.auth.models import User
 from app.schemas.chat import ChatCreate
 from app.socket_manager import sio
 from fastapi import APIRouter, Depends, HTTPException

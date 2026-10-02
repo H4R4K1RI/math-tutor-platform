@@ -5,10 +5,10 @@ from typing import List
 from decimal import Decimal
 
 from app.shared.db import get_db
-from app.models.user import User
+from app.auth.models import User
 from app.models.payment import Payment, StudentBalance
 from app.schemas.payment import PaymentCreate, PaymentResponse, StudentBalanceResponse
-from app.core.dependencies import get_current_teacher, get_current_user
+from app.auth.dependencies import get_current_teacher, get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 

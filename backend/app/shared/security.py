@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from app.shared.config import settings
-from app.schemas.user import TokenPayload
+from app.auth.schemas import TokenPayload
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 

@@ -29,7 +29,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from app.shared.config import settings
 from app.shared.db import Base, get_db
 from app.main import app
-from app.models.user import User
+from app.auth.models import User
 from app.shared.security import get_password_hash
 
 # ==================== ENGINE / SESSION ====================

@@ -1,6 +1,6 @@
 from app.shared.security import decode_token
 from app.shared.db import get_db
-from app.models.user import User
+from app.auth.models import User
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from httpx import AsyncClient
 
-from app.models.user import User
+from app.auth.models import User
 
 
 def _future_iso(days: int = 7) -> str:

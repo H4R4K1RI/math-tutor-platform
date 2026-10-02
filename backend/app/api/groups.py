@@ -3,11 +3,11 @@ from pydantic import BaseModel
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_teacher
+from app.auth.dependencies import get_current_teacher
 from app.shared.db import get_db
 from app.models.group import Group
 from app.models.group_student import GroupStudent
-from app.models.user import User
+from app.auth.models import User
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 

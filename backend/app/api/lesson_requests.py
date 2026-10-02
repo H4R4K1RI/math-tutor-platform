@@ -6,14 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_teacher, get_current_user
+from app.auth.dependencies import get_current_teacher, get_current_user
 from app.shared.logger import logger
 from app.shared.db import get_db
 from app.models.chat import Chat
 from app.models.lesson import Lesson
 from app.models.lesson_request import LessonRequest
 from app.models.payment import Payment, StudentBalance
-from app.models.user import User
+from app.auth.models import User
 from app.schemas.lesson_request import (
     LessonRequestCreate,
     LessonRequestResponse,

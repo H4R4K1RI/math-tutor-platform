@@ -6,11 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_teacher, get_current_user
+from app.auth.dependencies import get_current_teacher, get_current_user
 from app.shared.db import get_db
 from app.models.lesson import Lesson
 from app.models.payment import Payment, StudentBalance
-from app.models.user import User
+from app.auth.models import User
 from app.schemas.lesson import LessonCreate, LessonResponse, LessonUpdate
 
 router = APIRouter(prefix="/lessons", tags=["lessons"])
