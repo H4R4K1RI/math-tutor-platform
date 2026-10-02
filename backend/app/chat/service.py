@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from sqlalchemy import delete, desc, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.uploads import delete_file
+from app.shared.storage import delete_file
 from app.assignments.models import Assignment
 from app.auth.models import User
 from app.chat.models import Chat, Message
