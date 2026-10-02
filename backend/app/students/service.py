@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
 from app.assignments.models import Assignment, Submission
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.group import Group
 from app.models.group_student import GroupStudent
 from app.models.lesson import Lesson

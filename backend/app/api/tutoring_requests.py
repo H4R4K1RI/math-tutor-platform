@@ -5,7 +5,7 @@ from typing import List
 
 from app.auth.dependencies import get_current_user, get_current_teacher
 from app.shared.db import get_db
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.tutoring_request import TutoringRequest
 from app.auth.models import User
 from app.schemas.tutoring_request import (
@@ -13,7 +13,7 @@ from app.schemas.tutoring_request import (
     TutoringRequestResponse,
     TutoringRequestUpdate,
 )
-from app.socket_manager import sio
+from app.chat.socket import sio
 
 router = APIRouter(prefix="/tutoring-requests", tags=["tutoring-requests"])
 

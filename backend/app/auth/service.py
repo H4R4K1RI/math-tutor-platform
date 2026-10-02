@@ -12,7 +12,7 @@ from app.shared.security import (
     get_password_hash,
     verify_password,
 )
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.invitation import Invitation
 
 

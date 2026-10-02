@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_current_teacher, get_current_user
 from app.shared.logger import logger
 from app.shared.db import get_db
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.lesson import Lesson
 from app.models.lesson_request import LessonRequest
 from app.models.payment import Payment, StudentBalance
@@ -19,7 +19,7 @@ from app.schemas.lesson_request import (
     LessonRequestResponse,
     LessonRequestUpdate,
 )
-from app.socket_manager import sio
+from app.chat.socket import sio
 
 router = APIRouter(prefix="/lesson-requests", tags=["lesson-requests"])
 

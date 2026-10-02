@@ -5,7 +5,7 @@ from jose import JWTError, jwt
 from app.shared.config import settings
 from app.shared.logger import logger
 from app.shared.db import AsyncSessionLocal
-from app.models.chat import Chat, Message
+from app.chat.models import Chat, Message
 from app.auth.models import User
 
 # CORS нужен для Socket.IO, без дублирования с FastAPI

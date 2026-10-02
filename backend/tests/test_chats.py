@@ -106,7 +106,7 @@ async def test_get_chat_foreign(
 ):
     """Учитель не видит чужой чат → 403."""
     from app.shared.security import get_password_hash
-    from app.models.chat import Chat
+    from app.chat.models import Chat
     from app.auth.models import User
 
     # Второй учитель и ученик
@@ -163,7 +163,7 @@ async def test_get_messages_foreign(
 ):
     """Ученик не видит чужой чат → 403."""
     from app.shared.security import get_password_hash
-    from app.models.chat import Chat
+    from app.chat.models import Chat
     from app.auth.models import User
 
     teacher2 = User(
@@ -224,7 +224,7 @@ async def test_delete_chat_foreign(
 ):
     """Учитель не может удалить чужой чат → 403."""
     from app.shared.security import get_password_hash
-    from app.models.chat import Chat
+    from app.chat.models import Chat
     from app.auth.models import User
 
     teacher2 = User(

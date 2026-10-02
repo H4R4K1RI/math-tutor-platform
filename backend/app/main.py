@@ -10,12 +10,13 @@ from app.invitations.router import router as invitations_router
 from app.students.router import router as students_router
 from app.groups.router import router as groups_router
 from app.assignments.router import router as assignments_router
+from app.chat.socket import socket_app, sio
 from app.api import (
-    uploads, chats,
+    uploads,
     tests, payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
-from app.socket_manager import socket_app, sio
+from app.chat.router import router as chat_router
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -114,7 +115,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(assignments_router, prefix="/api")
 app.include_router(uploads.router, prefix="/api", tags=["upload"])
 app.include_router(users_router, prefix="/api")
-app.include_router(chats.router, prefix="/api", tags=["chats"])
+app.include_router(chat_router, prefix="/api")
 app.include_router(students_router, prefix="/api")
 app.include_router(invitations_router, prefix="/api")
 app.include_router(groups_router, prefix="/api")

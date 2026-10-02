@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.models import User
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.invitation import Invitation
 
 

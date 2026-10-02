@@ -11,10 +11,10 @@ from app.assignments.schemas import (
 )
 from app.auth.models import User
 from app.students.service import get_student_teacher_ids
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.group import Group
 from app.models.group_student import GroupStudent
-from app.socket_manager import sio
+from app.chat.socket import sio
 
 
 

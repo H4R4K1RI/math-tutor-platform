@@ -166,7 +166,7 @@ async def student_client(test_engine, student_user: User) -> AsyncClient:
 async def teacher_student_pair(
     db_session: AsyncSession, teacher_user: User, student_user: User
 ):
-    from app.models.chat import Chat
+    from app.chat.models import Chat
 
     chat = Chat(
         teacher_id=teacher_user.id,

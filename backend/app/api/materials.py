@@ -21,7 +21,7 @@ from app.schemas.material_folder import (
     MaterialFolderResponse,
     MaterialFolderUpdate,
 )
-from app.socket_manager import sio
+from app.chat.socket import sio
 
 router = APIRouter(prefix="/materials", tags=["materials"])
 

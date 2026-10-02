@@ -10,14 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.dependencies import get_current_teacher, get_current_user
 from app.shared.db import get_db
 from app.models.answer_option import AnswerOption
-from app.models.chat import Chat
+from app.chat.models import Chat
 from app.models.group_student import GroupStudent
 from app.models.question import Question
 from app.models.test import Test
 from app.auth.models import User
 from app.models.user_answer import UserAnswer
 from app.models.user_test import UserTest
-from app.socket_manager import sio
+from app.chat.socket import sio
 
 router = APIRouter(prefix="/tests", tags=["tests"])
 
