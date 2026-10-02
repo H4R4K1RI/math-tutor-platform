@@ -197,7 +197,7 @@ async def set_folder_access(
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
 
-    from app.api.students import get_teacher_student_ids
+    from app.students.service import get_teacher_student_ids
 
     teacher_student_ids = await get_teacher_student_ids(db, current_user.id)
 

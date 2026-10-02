@@ -21,7 +21,7 @@ async def add_payment(
 ):
     """Добавить платеж от ученика"""
 
-    from app.api.students import get_teacher_student_ids
+    from app.students.service import get_teacher_student_ids
 
     teacher_student_ids = await get_teacher_student_ids(db, current_user.id)
 
@@ -80,7 +80,7 @@ async def get_students_balance(
 ):
     """Получить баланс всех учеников учителя (оптимизировано)"""
 
-    from app.api.students import get_teacher_student_ids
+    from app.students.service import get_teacher_student_ids
 
     student_ids = await get_teacher_student_ids(db, current_user.id)
 

@@ -16,7 +16,7 @@ class UsersService:
 
     async def get_students(self, teacher_id: int) -> list[User]:
         """Список учеников учителя (только связанных с ним)."""
-        from app.api.students import get_teacher_student_ids
+        from app.students.service import get_teacher_student_ids
 
         student_ids = await get_teacher_student_ids(self.db, teacher_id)
 

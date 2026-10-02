@@ -224,7 +224,7 @@ async def create_chat(
     if existing_chat:
         return {"chat_id": existing_chat.id}
 
-    from app.api.students import get_teacher_student_ids
+    from app.students.service import get_teacher_student_ids
 
     teacher_student_ids = await get_teacher_student_ids(db, current_user.id)
 
@@ -275,7 +275,7 @@ async def get_or_create_chat_with_student(
     if chat:
         return {"chat_id": chat.id}
 
-    from app.api.students import get_teacher_student_ids
+    from app.students.service import get_teacher_student_ids
 
     teacher_student_ids = await get_teacher_student_ids(db, current_user.id)
 
