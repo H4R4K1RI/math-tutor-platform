@@ -1,7 +1,7 @@
 import asyncio
 import smtplib
-from email.message import EmailMessage
 from datetime import datetime
+from email.message import EmailMessage
 
 from app.shared.config import settings
 from app.shared.logger import logger
@@ -96,7 +96,7 @@ async def send_reminder_email(
         f"Время: {start_time_str}"
     )
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(
         None,
         _send_email_sync,
@@ -154,7 +154,7 @@ async def send_payment_reminder_email(
         f"{teacher_name} в размере {debt_amount:.2f} ₽."
     )
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(
         None,
         _send_email_sync,

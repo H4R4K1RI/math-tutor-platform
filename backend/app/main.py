@@ -19,13 +19,14 @@ from app.chat.router import router as chat_router
 from app.lessons.router import router as lessons_router
 from app.payments.router import router as payments_router
 from app.reviews.router import router as reviews_router
+from app.notifications.reminder_scheduler import run_scheduler
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from fastapi.responses import JSONResponse
 from app.shared.logger import logger
-from app.services.reminder_scheduler import run_scheduler
+
 
 # Отключаем rate limit в тестах
 if os.getenv("TESTING") == "1":

@@ -1,12 +1,13 @@
 from sqlalchemy import (
     Column,
-    Integer,
-    String,
     DateTime,
     ForeignKey,
+    Integer,
+    String,
     UniqueConstraint,
 )
 from sqlalchemy.sql import func
+
 from app.shared.db import Base
 
 

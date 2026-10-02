@@ -16,7 +16,7 @@ from app.lessons.models import Lesson, LessonRequest
 from app.reviews.models import Review
 from app.materials.models import FolderAccess, Material, MaterialFolder
 from app.tutoring_requests.models import TutoringRequest
-from app.models.sent_reminder import SentReminder
+from app.notifications.models import SentReminder
 
 __all__ = [
     "User",

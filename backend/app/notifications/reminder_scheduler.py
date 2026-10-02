@@ -2,24 +2,26 @@ import asyncio
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 
-from app.shared.db import AsyncSessionLocal
-from app.lessons.models import Lesson
 from app.auth.models import User
-from app.payments.models import StudentBalance
-from app.models.sent_reminder import SentReminder
-from app.services.notifications.email_service import (
-    send_reminder_email,
+from app.lessons.models import Lesson
+from app.notifications.email_service import (
     send_payment_reminder_email,
+    send_reminder_email,
 )
+from app.notifications.models import SentReminder
+from app.payments.models import StudentBalance
+from app.shared.db import AsyncSessionLocal
 from app.shared.logger import logger
 
 # Таймзона для планировщика
 MSK = ZoneInfo("Europe/Moscow")
 
 
-async def _was_sent(db, user_id: int, reminder_type: str, entity_id: int) -> bool:
+async def _was_sent(
+    db, user_id: int, reminder_type: str, entity_id: int
+) -> bool:
     """Проверяет, было ли уже отправлено такое напоминание."""
     result = await db.execute(
         select(SentReminder).where(
@@ -51,7 +53,9 @@ async def check_and_send_reminders():
     async with AsyncSessionLocal() as db:
         now = datetime.now(MSK)
         tomorrow = now + timedelta(days=1)
-        tomorrow_start = tomorrow.replace(hour=0, minute=0, second=0, microsecond=0)
+        tomorrow_start = tomorrow.replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         tomorrow_end = tomorrow.replace(
             hour=23, minute=59, second=59, microsecond=999999
         )
@@ -142,7 +146,9 @@ async def check_and_send_reminders():
                 user_ids.add(b.student_id)
                 user_ids.add(b.teacher_id)
 
-            users_result = await db.execute(select(User).where(User.id.in_(user_ids)))
+            users_result = await db.execute(
+                select(User).where(User.id.in_(user_ids))
+            )
             users_map = {u.id: u for u in users_result.scalars().all()}
 
             for balance in debts:
@@ -172,7 +178,9 @@ async def cleanup_old_reminders():
     """Удаляет старые записи о напоминаниях (старше 30 дней)."""
     async with AsyncSessionLocal() as db:
         cutoff = datetime.now(MSK) - timedelta(days=30)
-        await db.execute(delete(SentReminder).where(SentReminder.sent_at < cutoff))
+        await db.execute(
+            delete(SentReminder).where(SentReminder.sent_at < cutoff)
+        )
         await db.commit()
         logger.info("Old sent_reminders cleaned up")
 
