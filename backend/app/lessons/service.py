@@ -16,7 +16,7 @@ from app.lessons.schemas import (
     LessonRequestCreate,
     LessonRequestUpdate,
 )
-from app.models.payment import Payment, StudentBalance
+from app.payments.models import Payment, StudentBalance
 from app.shared.logger import logger
 
 

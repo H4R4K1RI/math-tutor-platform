@@ -9,6 +9,7 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.sql import func
+
 from app.shared.db import Base
 
 

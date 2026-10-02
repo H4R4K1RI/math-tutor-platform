@@ -13,12 +13,12 @@ from app.assignments.router import router as assignments_router
 from app.chat.socket import socket_app, sio
 from app.api import (
     uploads,
-    payments,
     reviews, materials, tutoring_requests,
 )
 from app.tests.router import router as tests_router
 from app.chat.router import router as chat_router
 from app.lessons.router import router as lessons_router
+from app.payments.router import router as payments_router
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -122,7 +122,7 @@ app.include_router(students_router, prefix="/api")
 app.include_router(invitations_router, prefix="/api")
 app.include_router(groups_router, prefix="/api")
 app.include_router(tests_router, prefix="/api")
-app.include_router(payments.router, prefix="/api", tags=["payments"])
+app.include_router(payments_router, prefix="/api")
 app.include_router(lessons_router, prefix="/api")
 app.include_router(reviews.router, prefix="/api", tags=["reviews"])
 app.include_router(materials.router, prefix="/api", tags=["materials"])

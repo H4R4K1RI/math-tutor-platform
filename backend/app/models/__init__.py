@@ -11,7 +11,7 @@ from app.tests.models import (
     UserAnswer,
     UserTest,
 )
-from app.models.payment import Payment, StudentBalance
+from app.payments.models import Payment, StudentBalance
 from app.lessons.models import Lesson, LessonRequest
 from app.models.review import Review
 from app.models.material_folder import MaterialFolder
