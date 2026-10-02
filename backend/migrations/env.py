@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 # Импортируем настройки и Base
-from app.core.config import settings
-from app.db.database import Base
+from app.shared.config import settings
+from app.shared.db import Base
 
 # Импортируем ВСЕ модели, чтобы Alembic их видел
 from app.models import *  # noqa: F401, F403
