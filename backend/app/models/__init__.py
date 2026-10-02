@@ -14,9 +14,7 @@ from app.tests.models import (
 from app.payments.models import Payment, StudentBalance
 from app.lessons.models import Lesson, LessonRequest
 from app.models.review import Review
-from app.models.material_folder import MaterialFolder
-from app.models.material import Material
-from app.models.folder_access import FolderAccess
+from app.materials.models import FolderAccess, Material, MaterialFolder
 from app.models.tutoring_request import TutoringRequest
 from app.models.sent_reminder import SentReminder
 

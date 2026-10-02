@@ -13,8 +13,9 @@ from app.assignments.router import router as assignments_router
 from app.chat.socket import socket_app, sio
 from app.api import (
     uploads,
-    reviews, materials, tutoring_requests,
+    reviews, tutoring_requests,
 )
+from app.materials.router import router as materials_router
 from app.tests.router import router as tests_router
 from app.chat.router import router as chat_router
 from app.lessons.router import router as lessons_router
@@ -125,7 +126,7 @@ app.include_router(tests_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(lessons_router, prefix="/api")
 app.include_router(reviews.router, prefix="/api", tags=["reviews"])
-app.include_router(materials.router, prefix="/api", tags=["materials"])
+app.include_router(materials_router, prefix="/api")
 app.include_router(tutoring_requests.router, prefix="/api", tags=["tutoring-requests"])
 
 
