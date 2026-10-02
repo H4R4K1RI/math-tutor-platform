@@ -5,8 +5,9 @@ import asyncio
 import os
 
 from app.auth.router import router as auth_router
+from app.users.router import router as users_router
 from app.api import (
-    assignments, submissions, uploads, users, chats,
+    assignments, submissions, uploads, chats,
     students, invitations, groups, tests, payments, lessons,
     reviews, lesson_requests, materials, tutoring_requests,
 )
@@ -109,7 +110,7 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(assignments.router, prefix="/api", tags=["assignments"])
 app.include_router(submissions.router, prefix="/api", tags=["submissions"])
 app.include_router(uploads.router, prefix="/api", tags=["upload"])
-app.include_router(users.router, prefix="/api", tags=["users"])
+app.include_router(users_router, prefix="/api")
 app.include_router(chats.router, prefix="/api", tags=["chats"])
 app.include_router(students.router, prefix="/api", tags=["students"])
 app.include_router(invitations.router, prefix="/api", tags=["invitations"])
