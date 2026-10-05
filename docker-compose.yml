@@ -1,6 +1,26 @@
 services:
+  # ==================== TRAEFIK ====================
+  traefik:
+    image: traefik:v3.1
+    container_name: math-tutor-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - ./certs:/certs:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+    environment:
+      - DOCKER_HOST=tcp://host.docker.internal:2375
+    networks:
+      - math-tutor-network
+
+  # ==================== DATABASE ====================
   db:
     image: postgres:16
+    container_name: math-tutor-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -15,9 +35,13 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    networks:
+      - math-tutor-network
 
+  # ==================== BACKEND ====================
   backend:
     build: ./backend
+    container_name: math-tutor-backend
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:${DB_PASSWORD}@db:5432/math_tutor
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me-in-production-please-32chars}
@@ -25,8 +49,8 @@ services:
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       COOKIE_SECURE: "false"
-    ports:
-      - "8000:8000"
+      FRONTEND_URL: https://tutor-platform.localhost
+      FORWARDED_ALLOW_IPS: "*"
     volumes:
       - ./logs:/app/logs
       - ./uploads:/app/uploads
@@ -35,14 +59,22 @@ services:
       db:
         condition: service_healthy
     restart: unless-stopped
+    networks:
+      - math-tutor-network
 
+  # ==================== FRONTEND ====================
   frontend:
     build: ./frontend
-    ports:
-      - "80:80"
+    container_name: math-tutor-frontend
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - math-tutor-network
 
 volumes:
   postgres_data:
+
+networks:
+  math-tutor-network:
+    driver: bridge

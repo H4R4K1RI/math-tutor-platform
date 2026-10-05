@@ -47,3 +47,9 @@ uploads/
 # Migrations (опционально, обычно коммитятся)
 # backend/migrations/versions/
 
+# Traefik / certs (локальные)
+certs/
+tools/
+
+# Traefik
+traefik/acme.json

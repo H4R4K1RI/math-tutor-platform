@@ -1,0 +1,64 @@
+# ==================== TLS ====================
+
+tls:
+  certificates:
+    - certFile: /certs/_wildcard.tutor-platform.localhost+1.pem
+      keyFile: /certs/_wildcard.tutor-platform.localhost+1-key.pem
+
+# ==================== HTTP ROUTERS & SERVICES ====================
+
+http:
+  routers:
+    # ---- Dashboard ----
+    dashboard:
+      rule: "Host(`traefik.tutor-platform.localhost`)"
+      entryPoints:
+        - websecure
+      service: api@internal
+      tls: {}
+
+    # ---- Frontend (SPA) ----
+    frontend:
+      rule: "Host(`tutor-platform.localhost`)"
+      entryPoints:
+        - websecure
+      service: frontend-svc
+      tls: {}
+
+    # ---- Backend API ----
+    backend-api:
+      rule: "Host(`tutor-platform.localhost`) && PathPrefix(`/api`)"
+      entryPoints:
+        - websecure
+      service: backend-svc
+      tls: {}
+      priority: 100
+
+    # ---- Socket.IO ----
+    backend-socket:
+      rule: "Host(`tutor-platform.localhost`) && PathPrefix(`/socket.io`)"
+      entryPoints:
+        - websecure
+      service: backend-svc
+      tls: {}
+      priority: 100
+
+    # ---- Static files ----
+    backend-static:
+      rule: "Host(`tutor-platform.localhost`) && PathPrefix(`/static`)"
+      entryPoints:
+        - websecure
+      service: backend-svc
+      tls: {}
+      priority: 100
+
+  services:
+    frontend-svc:
+      loadBalancer:
+        servers:
+          - url: "http://frontend:80"
+
+    backend-svc:
+      loadBalancer:
+        servers:
+          - url: "http://backend:8000"

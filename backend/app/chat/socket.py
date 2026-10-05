@@ -11,13 +11,15 @@ from app.auth.models import User
 # CORS нужен для Socket.IO, без дублирования с FastAPI
 sio = socketio.AsyncServer(
     cors_allowed_origins=[
-        "http://localhost",
-        "http://localhost:80",
-        "http://127.0.0.1",
-        "http://127.0.0.1:80",
-        "https://tutor-platform.ru",
-        "https://www.tutor-platform.ru",
-    ],
+    "http://localhost",
+    "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://tutor-platform.localhost",
+    "https://tutor-platform.localhost",
+    "https://tutor-platform.ru",
+    "https://www.tutor-platform.ru",
+],
     async_mode="asgi",
 )
 
