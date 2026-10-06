@@ -66,7 +66,6 @@ services:
     restart: unless-stopped
     networks:
       - math-tutor-network
-
   # ==================== FRONTEND ====================
   frontend:
     build: ./frontend
@@ -76,7 +75,13 @@ services:
     restart: unless-stopped
     networks:
       - math-tutor-network
-
+  # ==================== YJS WEBSOCKET ====================
+  yjs-server:
+    build: ./yjs-server
+    container_name: math-tutor-yjs
+    restart: unless-stopped
+    networks:
+      - math-tutor-network
 volumes:
   postgres_data:
 
