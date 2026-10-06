@@ -13,6 +13,7 @@ from slowapi.util import get_remote_address
 from app.api import uploads
 from app.assignments.router import router as assignments_router
 from app.auth.router import router as auth_router
+from app.board.router import router as board_router
 from app.chat.router import router as chat_router
 from app.chat.socket import socket_app
 from app.groups.router import router as groups_router
@@ -132,6 +133,7 @@ app.include_router(invitations_router, prefix="/api")
 app.include_router(students_router, prefix="/api")
 app.include_router(groups_router, prefix="/api")
 app.include_router(assignments_router, prefix="/api")
+app.include_router(board_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(tests_router, prefix="/api")
 app.include_router(lessons_router, prefix="/api")

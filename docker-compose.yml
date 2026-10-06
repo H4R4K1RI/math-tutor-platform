@@ -55,6 +55,7 @@ services:
       - ./logs:/app/logs
       - ./uploads:/app/uploads
       - ./backend/migrations:/app/migrations
+      - ./backend/app:/app/app
     depends_on:
       db:
         condition: service_healthy

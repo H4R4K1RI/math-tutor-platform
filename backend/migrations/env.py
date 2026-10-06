@@ -34,6 +34,7 @@ from app.materials.models import (  # noqa: F401
 )
 from app.tutoring_requests.models import TutoringRequest  # noqa: F401
 from app.notifications.models import SentReminder  # noqa: F401
+from app.board.models import Board  # noqa: F401
 
 # Alembic Config object
 config = context.config

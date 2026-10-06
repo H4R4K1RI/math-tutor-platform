@@ -178,3 +178,30 @@ async def teacher_student_pair(
     await db_session.refresh(chat)
 
     return {"teacher": teacher_user, "student": student_user, "chat": chat}
+
+@pytest_asyncio.fixture
+async def teacher_lesson(
+    db_session: AsyncSession,
+    teacher_user: User,
+    student_user: User,
+):
+    """Урок между учителем и учеником для тестов board/lessons."""
+    from datetime import datetime, timedelta, timezone
+
+    from app.lessons.models import Lesson
+
+    now = datetime.now(timezone.utc)
+    lesson = Lesson(
+        teacher_id=teacher_user.id,
+        student_id=student_user.id,
+        title="Test Lesson",
+        start_time=now + timedelta(days=1),
+        end_time=now + timedelta(days=1, hours=1),
+        price=0,
+        status="scheduled",
+    )
+    db_session.add(lesson)
+    await db_session.commit()
+    await db_session.refresh(lesson)
+
+    return lesson

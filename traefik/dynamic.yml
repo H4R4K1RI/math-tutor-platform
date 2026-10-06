@@ -24,7 +24,14 @@ http:
         - websecure
       service: frontend-svc
       tls: {}
-
+    # ---- Backend Docs (Swagger / ReDoc) ----
+    backend-docs:
+      rule: "Host(`tutor-platform.localhost`) && (PathPrefix(`/docs`) || PathPrefix(`/redoc`) || PathPrefix(`/openapi.json`))"
+      entryPoints:
+        - websecure
+      service: backend-svc
+      tls: {}
+      priority: 100
     # ---- Backend API ----
     backend-api:
       rule: "Host(`tutor-platform.localhost`) && PathPrefix(`/api`)"
