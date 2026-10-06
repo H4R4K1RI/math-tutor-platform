@@ -1,6 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
 from typing import Optional
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -29,6 +30,12 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM_EMAIL: Optional[str] = None
     SMTP_FROM_NAME: Optional[str] = "Math Tutor Platform"
+
+    # Jitsi (video)
+    JITSI_DOMAIN: str = "meet.tutor-platform.localhost"
+    JITSI_JWT_APP_ID: str = "math-tutor"
+    JITSI_JWT_APP_SECRET: str = "change-me-in-production-min-32-chars"
+    JITSI_TOKEN_EXPIRE_HOURS: int = 2
 
     @field_validator("SECRET_KEY")
     @classmethod

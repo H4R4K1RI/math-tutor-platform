@@ -51,6 +51,10 @@ services:
       COOKIE_SECURE: "false"
       FRONTEND_URL: https://tutor-platform.localhost
       FORWARDED_ALLOW_IPS: "*"
+      JITSI_DOMAIN: meet.tutor-platform.localhost
+      JITSI_JWT_APP_ID: math-tutor
+      JITSI_JWT_APP_SECRET: ${JITSI_JWT_APP_SECRET:-change-me-in-production-min-32-chars}
+      JITSI_TOKEN_EXPIRE_HOURS: "2"
     volumes:
       - ./logs:/app/logs
       - ./uploads:/app/uploads

@@ -28,6 +28,7 @@ from app.students.router import router as students_router
 from app.tests.router import router as tests_router
 from app.tutoring_requests.router import router as tutoring_requests_router
 from app.users.router import router as users_router
+from app.video.router import router as video_router
 
 
 # ==================== RATE LIMITER ====================
@@ -141,6 +142,7 @@ app.include_router(payments_router, prefix="/api")
 app.include_router(materials_router, prefix="/api")
 app.include_router(reviews_router, prefix="/api")
 app.include_router(tutoring_requests_router, prefix="/api")
+app.include_router(video_router, prefix="/api")
 app.include_router(uploads.router, prefix="/api", tags=["upload"])
 
 
