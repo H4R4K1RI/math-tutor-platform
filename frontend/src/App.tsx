@@ -33,6 +33,7 @@ import LessonRequestsPage from './pages/LessonRequestsPage';
 import MaterialsPage from './pages/MaterialsPage';
 import TutoringRequestsPage from './pages/TutoringRequestsPage';
 import JoinByInvite from './pages/JoinByInvite';
+import LessonPage from './pages/LessonPage';
 import { Toaster } from 'react-hot-toast';
 
 // Ленивая загрузка страниц
@@ -105,6 +106,7 @@ function AppRoutes() {
         <Route path="/finance" element={<TeacherRoute><LazyRoute><FinancePage /></LazyRoute></TeacherRoute>} />
         <Route path="/payments" element={<ProtectedRoute><LazyRoute><PaymentHistory /></LazyRoute></ProtectedRoute>} />
         <Route path="/calendar" element={<ProtectedRoute><LazyRoute><CalendarPage /></LazyRoute></ProtectedRoute>} />
+        <Route path="/lesson/:id" element={<ProtectedRoute><LazyRoute><LessonPage /></LazyRoute></ProtectedRoute>} />
         <Route path="/requests" element={<ProtectedRoute><LazyRoute><LessonRequestsPage /></LazyRoute></ProtectedRoute>} />
         <Route path="/materials" element={<ProtectedRoute><LazyRoute><MaterialsPage /></LazyRoute></ProtectedRoute>} />
         <Route path="/tutoring-requests" element={<ProtectedRoute><LazyRoute><TutoringRequestsPage /></LazyRoute></ProtectedRoute>} />
@@ -117,7 +119,9 @@ function AppRoutes() {
 function AppContent() {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-  const isChatPage = location.pathname.startsWith('/chat/');
+  const isFullscreenPage =
+  location.pathname.startsWith('/chat/') ||
+  location.pathname.startsWith('/lesson/');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -133,7 +137,7 @@ function AppContent() {
 
   return (
     <div className="min-h-screen bg-dark-bg flex flex-col">
-      {!isChatPage && (
+      {!isFullscreenPage && (
         <Header
           darkMode={darkMode}
           setDarkMode={setDarkMode}
@@ -143,13 +147,13 @@ function AppContent() {
 
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen && !isAuthPage && !isChatPage ? 'ml-72' : ''}`}>
-        <div className={`${isChatPage ? 'p-0' : 'p-6'}`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen && !isAuthPage && !isFullscreenPage ? 'ml-72' : ''}`}>
+        <div className={`${isFullscreenPage ? 'p-0' : 'p-6'}`}>
           <AppRoutes />
         </div>
       </main>
 
-      {!isChatPage && <Footer />}
+      {!isFullscreenPage && <Footer />}
     </div>
   );
 }

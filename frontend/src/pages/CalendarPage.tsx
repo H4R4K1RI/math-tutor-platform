@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import AnimatedPage from '../components/AnimatedPage';
 import { Calendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
@@ -16,6 +17,7 @@ import {
   FiDollarSign,
   FiUser,
   FiEdit2,
+  FiVideo,
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -72,6 +74,7 @@ const CalendarPage: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(Views.MONTH);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   // Форма создания
   const [formData, setFormData] = useState({
@@ -603,8 +606,22 @@ const CalendarPage: React.FC = () => {
                   </span>
                 </div>
               </div>
+              
+              
 
               <div className="flex justify-end gap-3 mt-6 flex-wrap">
+
+                <button
+                  onClick={() => {
+                    setShowLessonModal(false);
+                    navigate(`/lesson/${selectedLesson.id}`);
+                  }}
+                  className="px-4 py-2 rounded-lg bg-accent hover:bg-accent/80 text-white transition flex items-center gap-2"
+                >
+                  <FiVideo size={14} />
+                  Открыть урок
+                </button>
+
                 <button
                   onClick={() => setShowLessonModal(false)}
                   className="px-4 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/10 transition"
