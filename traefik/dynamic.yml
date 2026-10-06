@@ -2,8 +2,8 @@
 
 tls:
   certificates:
-    - certFile: /certs/_wildcard.tutor-platform.localhost+1.pem
-      keyFile: /certs/_wildcard.tutor-platform.localhost+1-key.pem
+    - certFile: /certs/_wildcard.tutor-platform.localhost+2.pem
+      keyFile: /certs/_wildcard.tutor-platform.localhost+2-key.pem
 
 # ==================== HTTP ROUTERS & SERVICES ====================
 
@@ -58,6 +58,15 @@ http:
       service: backend-svc
       tls: {}
       priority: 100
+    
+    # ---- Jitsi Meet (video) ----
+    meet-jitsi:
+      rule: "Host(`meet.tutor-platform.localhost`)"
+      entryPoints:
+        - websecure
+      service: jitsi-web-svc
+      tls: {}
+      priority: 100
 
   services:
     frontend-svc:
@@ -69,3 +78,8 @@ http:
       loadBalancer:
         servers:
           - url: "http://backend:8000"
+
+    jitsi-web-svc:
+      loadBalancer:
+        servers:
+          - url: "http://jitsi-web:8000"

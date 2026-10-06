@@ -1,0 +1,8 @@
+# Jitsi env (секреты)
+.env
+
+# Jitsi config (генерируется)
+config/
+
+# Бэкапы
+*.bak
